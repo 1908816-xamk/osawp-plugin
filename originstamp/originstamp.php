@@ -52,10 +52,8 @@ function create_originstamp( $post_id ) {
   $response = true;
 
   $body = array(
-    'stamp' => array(
-      'sender' => $user_email,
-      'recipients' => $recipients
-    )
+    'sender' => $user_email,
+    'recipients' => $recipients
   );
   
   if ( $response ) {
@@ -65,9 +63,9 @@ function create_originstamp( $post_id ) {
     // $result->query( 'wp.getPost', $blog_id, "user", "password", $post_id );
     $result = get_post( $post_id );
 
-    $body['stamp']['raw_content'] = serialize($result);
+    $body['raw_content'] = serialize($result);
   } else {
-    $body['stamp']['hash_sha256'] = hash( 'sha256', $content );
+    $body['hash_sha256'] = hash( 'sha256', $content );
   }
 
   send_to_originstamp_api( $body );
@@ -75,8 +73,8 @@ function create_originstamp( $post_id ) {
 
 function send_to_originstamp_api( $body ) {
   $options = get_options();
-  $body['stamp']['send_back'] = $options['send_back'];
-  $body['stamp']['sender'] = $options['sender'];
+  $body['send_back'] = $options['send_back'];
+  $body['sender'] = $options['sender'];
 
   $response = wp_remote_post( 'http://www.originstamp.org/api/stamps', array(
     'method' => "POST",
