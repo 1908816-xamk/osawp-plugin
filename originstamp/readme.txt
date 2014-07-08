@@ -11,7 +11,7 @@ OriginStamp is an automated time-stamping solution for your wordpress posts.
 
 == Description ==
 
-A timestamp is created every time you save a blog post.
+A timestamp is created every time you save a blog post. The timestamp is created from a structured data object which also contains all meta-informatin of the blog post. By this its required to input your email address, so each time you save a blog post we can send you a copy of the plain structured data object by email. This is what you need to store permanently.
 
 Feedback is very welcome. Please visit www.originstamp.org for contact information.
 
