@@ -63,7 +63,7 @@ function create_originstamp( $post_id ) {
     // $result->query( 'wp.getPost', $blog_id, "user", "password", $post_id );
     $result = get_post( $post_id );
 
-    $body['raw_content'] = serialize($result);
+    $body['raw_content'] = serialize([$result->post_title, $result->post_content]);
   } else {
     $body['hash_sha256'] = hash( 'sha256', $content );
   }
