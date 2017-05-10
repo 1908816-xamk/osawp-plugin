@@ -42,29 +42,21 @@ function create_originstamp($post_id)
     if (wp_is_post_revision($post_id))
         return;
 
-    global $user_email;
     global $blog_id;
     get_currentuserinfo();
 
-    $response = true;
+    // include_once( ABSPATH . WPINC . '/class-IXR.php' );
+    // include_once( ABSPATH . WPINC . '/class-wp-http-ixr-client.php' );
+    // $result = new WP_HTTP_IXR_CLIENT( 'http://localhost/wordpress/xmlrpc.php' );
+    // $result->query( 'wp.getPost', $blog_id, "user", "password", $post_id );
+    $result = get_post($post_id);
 
-    $body = array(
-        'email' => $user_email
-    );
+    $data = serialize([$result->post_title, $result->post_content]);
+    $hash_string = hash('sha256', $data);
+    $body['hash_string'] = $hash_string;
 
-    if ($response) {
-        // include_once( ABSPATH . WPINC . '/class-IXR.php' );
-        // include_once( ABSPATH . WPINC . '/class-wp-http-ixr-client.php' );
-        // $result = new WP_HTTP_IXR_CLIENT( 'http://localhost/wordpress/xmlrpc.php' );
-        // $result->query( 'wp.getPost', $blog_id, "user", "password", $post_id );
-        $result = get_post($post_id);
-
-        $body['raw_content'] = serialize([$result->post_title, $result->post_content]);
-    } else {
-        $body['hash_sha256'] = hash('sha256', $content);
-    }
-
-    send_to_originstamp_api($body);
+    $response = serialize(send_to_originstamp_api($body, $hash_string));
+    send_confirm_email($data, $hash_string);
 }
 
 function send_to_originstamp_api($body, $hashString)
@@ -72,11 +64,11 @@ function send_to_originstamp_api($body, $hashString)
     $options = get_options();
     $body['email'] = $options['email'];
 
-    $response = wp_remote_post('http://api.originstamp.org/api/' . $hashString, array(
+    $response = wp_remote_post('https://api.originstamp.org/api/' . $hashString, array(
         'method' => "POST",
         'timeout' => 45,
         'redirection' => 5,
-        'httpversion' => "1.0",
+        'httpversion' => "1.1",
         'blocking' => true,
         'headers' => array(
             'content-type' => "application/json",
@@ -89,9 +81,18 @@ function send_to_originstamp_api($body, $hashString)
 
     if (is_wp_error($response)) {
         $error_message = $response->get_error_message();
-        // TODO
-    } else {
-        // TODO success
+    }
+
+    return $response;
+}
+
+function send_confirm_email($data, $hash_string)
+{
+    $instructions = "Please store this Email. You need to hash following value:";
+    $options = get_options();
+    $response = wp_mail($options['email'], "OriginStamp " . $hash_string, $data);
+    if (is_wp_error($response)) {
+        $error_message = $response->get_error_message();
     }
 }
 
@@ -103,7 +104,7 @@ function originstamp_action_links($links)
 
 function originstamp_table_information()
 {
-    
+
 }
 
 function originstamp_admin_menu()
@@ -171,6 +172,15 @@ function api_token()
     <input type="text" name="originstamp[api_token]" size="40" value="<?php echo $options['api_token'] ?>"/>
     <p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
         https://www.originstamp.org/dev</p>
+    <?php
+}
+
+function sender_email()
+{
+    $options = get_options();
+    ?>
+    <input type="text" name="originstamp[email]" size="40" value="<?php echo $options['email'] ?>"/>
+    <p class="description"><?php _e('Please provide an Email address so that we can send your data. You need to store your data to be able to verify it.') ?>
     <?php
 }
 
