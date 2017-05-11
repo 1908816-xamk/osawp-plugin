@@ -1,5 +1,5 @@
 === OriginStamp ===
-Contributors: ager
+Contributors: ager, thepp, eustro
 Tags: time-stamping, verification, bitcoin
 Requires at least: 3.0
 Tested up to: 
@@ -36,4 +36,11 @@ Visit 'Settings > OriginStamp' and adjust your configuration.
 == Changelog ==
 
 = 0.0.2 =
-* Customized for changed OriginStamp API
+* Customized for changed OriginStamp API.
+
+= 0.0.3 =
+* Usage of new API added.
+* Email delivery added.
+
+= 0.0.4 =
+* Table of timestamps implemented.
