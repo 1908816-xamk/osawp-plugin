@@ -134,9 +134,6 @@ function get_hashes_for_api_key($offset, $records)
 
     ));
 
-    if ($response->errors)
-        return $response->get_error_messages();
-
     return $response;
 }
 
@@ -220,21 +217,62 @@ function sender_email()
 
 function hashes_for_api_key()
 {
-    $hash_table = get_hashes_for_api_key(0, 250);
-    $json_obj = json_decode($hash_table['body']);
-    ?>
-        <p class="description">A lit of all your hashes submitted woth API key above: <br> </p>
-        <p ><?php foreach ($json_obj->hashes as $hash)
-                    {
+    $max_records = 250;
+    $first_page = get_hashes_for_api_key(0, $max_records);
+    $first_page_json_obj = json_decode($first_page['body']);
+        if ($first_page->errors)
+            return;
+    $num_of_pages = ceil($first_page_json_obj->total_records / $max_records);
+    $pagination = array();
+    array_push($pagination, $first_page_json_obj);
+    // Make pagination
+    if ($first_page_json_obj->total_records > $max_records)
+    {
+        for ($i = 1; $i <= $num_of_pages; $i++)
+        {
+            $following_page = get_hashes_for_api_key($i * $max_records, $max_records);
+            if ($following_page->errors)
+                continue;
+            $following_page_json_obj = json_decode($following_page['body']);
+            array_push($pagination, $following_page_json_obj);
+        }
+        ?>
+        <p class="description">A lit of all your hashes submitted woth API key above: <br></p>
+        <div class="pagination">
+            <p><?php $i = 1; foreach ($pagination as $page) {
+                    $body = $page->hashes;
+                    foreach ($body as $hash) {
                         echo '<a href="https://originstamp.org/s/'
-                            . $hash->hash_string . '"'
-                            .'target="_blank"'
+                            . $hash->hash_string
+                            . '"'
+                            . ' target="_blank"'
                             . '">'
                             . $hash->hash_string
                             . '</a>'
                             . '<br>';
                     }
+             }
+    ?>
+        </div>
+    <?php
+    }
+    // Make one page with all records.
+    else
+    {
+        ?>
+        <p class="description">A lit of all your hashes submitted woth API key above: <br></p>
+        <p><?php foreach ($first_page_json_obj->hashes as $hash) {
+        echo '<a href="https://originstamp.org/s/'
+            . $hash->hash_string
+            . '"'
+            . ' target="_blank"'
+            . '">'
+            . $hash->hash_string
+            . '</a>'
+            . '<br>';
+    }
     ?>
     <?php
+    }
 }
 ?>
