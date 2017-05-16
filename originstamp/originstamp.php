@@ -237,12 +237,13 @@ function hashes_for_api_key()
     // Overall number of pages
     $num_of_pages = ceil($page_info_json_obj->total_records / $limit);
 
-    //TODO: Check, if using this is safe.
-    if (isset($_GET['p'])) {
-        $page = $_GET['p'];
-    } else {
-        $page = 1;
-    }
+    // GET current page
+    $page = min($num_of_pages, filter_input(INPUT_GET, 'p', FILTER_VALIDATE_INT, array(
+        'options' => array(
+            'default'   => 1,
+            'min_range' => 1,
+        ),
+    )));
     // Calculate the offset for the query
     $offset = ($page - 1) * $limit;
 
