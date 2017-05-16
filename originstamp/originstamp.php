@@ -10,7 +10,7 @@ define("ORIGINSTAMP_SETTINGS", serialize(array(
  * Plugin URI: http://www.originstamp.org
  * Description: Creates a tamper-proof timestamp of your content each time it is modified. The timestamp is created with the Bitcoin blockchain.
  * Version: 0.3
- * Author: Thomas Hepp, André Gernandt
+ * Author: Thomas Hepp, André Gernandt, Eugen Stroh
  * Author URI: https://github.com/thhepp/
  * License: The MIT License (MIT)
  *
@@ -157,6 +157,11 @@ add_action('admin_menu', 'originstamp_admin_menu');
 add_action('wp_head', 'hashes_for_api_key');
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_action_links');
 
+function add_cors_http_header(){
+    header("Access-Control-Allow-Origin: *");
+}
+add_action('init','add_cors_http_header');
+
 function validate_options()
 {
     $options = unserialize(ORIGINSTAMP_SETTINGS);
@@ -217,62 +222,61 @@ function sender_email()
 
 function hashes_for_api_key()
 {
-    $max_records = 250;
-    $first_page = get_hashes_for_api_key(0, $max_records);
-    $first_page_json_obj = json_decode($first_page['body']);
-        if ($first_page->errors)
-            return;
-    $num_of_pages = ceil($first_page_json_obj->total_records / $max_records);
-    $pagination = array();
-    array_push($pagination, $first_page_json_obj);
-    // Make pagination
-    if ($first_page_json_obj->total_records > $max_records)
-    {
-        for ($i = 1; $i <= $num_of_pages; $i++)
-        {
-            $following_page = get_hashes_for_api_key($i * $max_records, $max_records);
-            if ($following_page->errors)
-                continue;
-            $following_page_json_obj = json_decode($following_page['body']);
-            array_push($pagination, $following_page_json_obj);
-        }
-        ?>
-        <p class="description">A lit of all your hashes submitted woth API key above: <br></p>
-        <div class="pagination">
-            <p><?php $i = 1; foreach ($pagination as $page) {
-                    $body = $page->hashes;
-                    foreach ($body as $hash) {
-                        echo '<a href="https://originstamp.org/s/'
-                            . $hash->hash_string
-                            . '"'
-                            . ' target="_blank"'
-                            . '">'
-                            . $hash->hash_string
-                            . '</a>'
-                            . '<br>';
-                    }
-             }
+    // Maximum number of pages the API will return.
+    $limit = 50;
+
+    // Get first record, to determine, how many records there are overall.
+    $get_page_info = get_hashes_for_api_key(0, 1);
+
+    // Extract bory from response.
+    $page_info_json_obj = json_decode($get_page_info['body']);
+
+    // Total number of records in the database.
+    $total = $page_info_json_obj->total_records;
+
+    // Overall number of pages
+    $num_of_pages = ceil($page_info_json_obj->total_records / $limit);
+
+    //TODO: Check, if using this is safe.
+    if (isset($_GET['p'])) {
+        $page = $_GET['p'];
+    } else {
+        $page = 1;
+    }
+    // Calculate the offset for the query
+    $offset = ($page - 1) * $limit;
+
+    // Some information to display to the user
+    $start = $offset + 1;
+    $end = min(($offset + $limit), $total);
+
+    // The "back" link
+    $prevlink = ($page > 1) ? '<a href="?page=originstamp&p=1" title="First page">&laquo;</a> <a href="?page=originstamp' . '&p=' . ($page - 1) . '" title="Previous page">&lsaquo;</a>' : '<span class="disabled">&laquo;</span> <span class="disabled">&lsaquo;</span>';
+
+    // The "forward" link
+    $nextlink = ($page < $num_of_pages) ? '<a href="?page=originstamp' . '&p=' . ($page + 1) . '" title="Next page">&rsaquo;</a> <a href="?page=originstamp' . '&p=' . $num_of_pages . '" title="Last page">&raquo;</a>' : '<span class="disabled">&rsaquo;</span> <span class="disabled">&raquo;</span>';
+
+    // Display the paging information
+    echo '<p class="description">A list of all your hashes submitted with API key above: <br></p>';
+    echo '<div id="paging"><p>', $prevlink, ' Page ', $page, ' of ', $num_of_pages, ' pages, displaying ', $start, '-', $end, ' of ', $total, ' results ', $nextlink, ' </p></div>';
+
+    // Get data from API.
+    $response = get_hashes_for_api_key($offset, $limit);
+    $response_json_obj = json_decode($response['body']);
+
+    // Parse response.
     ?>
-        </div>
-    <?php
-    }
-    // Make one page with all records.
-    else
-    {
-        ?>
-        <p class="description">A lit of all your hashes submitted woth API key above: <br></p>
-        <p><?php foreach ($first_page_json_obj->hashes as $hash) {
-        echo '<a href="https://originstamp.org/s/'
-            . $hash->hash_string
-            . '"'
-            . ' target="_blank"'
-            . '">'
-            . $hash->hash_string
-            . '</a>'
-            . '<br>';
-    }
-    ?>
-    <?php
-    }
+            <?php foreach ($response_json_obj->hashes as $hash) {
+                echo '<a href="https://originstamp.org/s/'
+                    . $hash->hash_string
+                    . '"'
+                    . ' target="_blank"'
+                    . '">'
+                    . $hash->hash_string
+                    . '</a>'
+                    . '<br>';
+            }
+            ?>
+            <?php
 }
 ?>
