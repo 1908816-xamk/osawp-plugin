@@ -1,5 +1,14 @@
 <?php
 
+// Add font-awesome styles to Originstamp settings page.
+function admin_register_head() {
+    $siteurl = get_option('siteurl');
+    $url = $siteurl . '/wp-content/plugins/' . basename(dirname(__FILE__)) . '/font-awesome-4.7.0/css/font-awesome.min.css';
+    echo "<link rel='stylesheet' type='text/css' href='$url' />\n";
+}
+add_action('admin_head', 'admin_register_head');
+
+// Define api key and email to save for future uses.
 define("ORIGINSTAMP_SETTINGS", serialize(array(
     "api_key" => "",
     "email" => ""
@@ -140,12 +149,8 @@ function get_hashes_for_api_key($offset, $records)
 function originstamp_admin_menu()
 {
     register_setting('originstamp', 'originstamp');
-    // apply_filters( 'originstamp_default_options', array(
-    //   'api_key'  => "",
-    //   'sender'     => get_option( 'admin_email' )
-    // ) );
 
-    add_settings_section('originstamp', __('OriginStamp API'), 'settings_section', 'originstamp');
+    add_settings_section('originstamp', __('Settings'), 'settings_section', 'originstamp');
     add_settings_field('originstamp_api_key', __('API Key'), 'api_key', 'originstamp', 'originstamp');
     add_settings_field('originstamp_sender_email', __('Sender Email'), 'sender_email', 'originstamp', 'originstamp');
     add_settings_field('oroginstamp_hash_table', __('Hash table'), 'hashes_for_api_key', 'originstamp', 'originstamp');
@@ -175,7 +180,6 @@ function settings_section()
 function get_options()
 {
     $options = (array)get_option('originstamp');
-    // $options = wp_parse_args ( $options );
     return $options;
 }
 
@@ -186,7 +190,7 @@ function originstamp_admin_page()
         <h2><?php _e('OriginStamp'); ?></h2>
         <?php if (!empty($options['invalid_emails']) && $_GET['settings-updated']) : ?>
             <div class="error">
-                <p><?php // printf( _n( 'Invalid Email: %s', 'Invalid Emails: %s', count( $options['invalid_emails'] ) ), '<kbd>' . join( '</kbd>, <kbd>', array_map( 'esc_html', $options['invalid_emails'] ) ) ); ?></p>
+                <p><?php  ?></p>
             </div>
         <?php endif; ?>
 
@@ -207,7 +211,7 @@ function api_key()
     ?>
     <input type="text" name="originstamp[api_key]" size="40" value="<?php echo $options['api_key'] ?>"/>
     <p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
-        https://www.originstamp.org/dev</p>
+       <a href="https://www.originstamp.org/dev">https://www.originstamp.org/dev</a></p>
     <?php
 }
 
@@ -267,17 +271,35 @@ function hashes_for_api_key()
 
     // Parse response.
     ?>
+        <?php echo '<table style="display: inline-table;">'?>
+        <?php echo '<p style="display:inline-table;">' ?>
             <?php foreach ($response_json_obj->hashes as $hash) {
-                echo '<a href="https://originstamp.org/s/'
-                    . $hash->hash_string
-                    . '"'
-                    . ' target="_blank"'
-                    . '">'
-                    . $hash->hash_string
-                    . '</a>'
-                    . '<br>';
+                // From milliseconds to seconds.
+                $date_created = $hash->date_created / 1000;
+                $submit_status = $hash->submit_status->multi_seed;
+                $hash_string = $hash->hash_string;
+                echo '<tr>';
+                    echo '<td>' . gmdate("Y-m-d H:i:s", $date_created). '</td>';
+                echo '</tr>';
+                echo '<tr>';
+                    echo '<td>';
+                        echo '<a href="https://originstamp.org/s/'
+                            . $hash_string
+                            . '"'
+                            . ' target="_blank"'
+                            . '">'
+                            . $hash_string
+                            . '</a>';
+                    echo '</td>';
+                echo '</tr>';
+                echo '<tr>';
+                    echo '<td>';
+                        echo '<i class="fa fa-check-circle-o" aria-hidden="true"></i>';
+                    echo '</td>';
+                echo '</tr>';
             }
             ?>
+        <?php echo '</table>' ?>
             <?php
 }
 ?>
