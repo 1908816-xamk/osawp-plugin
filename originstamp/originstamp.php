@@ -47,8 +47,10 @@ define("ORIGINSTAMP_SETTINGS", serialize(array(
     "email" => ""
 )));
 
+//TODO: Check, what is hashed and what we really need to hash.
 function create_originstamp($post_id)
 {
+    // Create a SHA256 value from WP post or edit.
     if (wp_is_post_revision($post_id))
         return;
 
@@ -64,6 +66,7 @@ function create_originstamp($post_id)
 
 function send_to_originstamp_api($body, $hashString)
 {
+    // Send computed hash value to OriginStamp.
     $options = get_options();
     $body['email'] = $options['email'];
 
@@ -95,6 +98,7 @@ function send_to_originstamp_api($body, $hashString)
 
 function send_confirm_email($data, $hash_string)
 {
+    // Send confirmation Email to user.
     $instructions = "Please store this Email. You need to hash following value with a SHA256:\n";
     $options = get_options();
     $response = wp_mail($options['email'], "OriginStamp " . $hash_string, $instructions . $data);
@@ -110,14 +114,15 @@ function originstamp_action_links($links)
 
 function get_hashes_for_api_key($offset, $records)
 {
-    // POST fields for table request.
-    // email
-    // hash_string
-    // comment
-    // date_created
-    // api_key
-    // offset
-    // records
+    // Get hash table for API key.
+    /*POST fields for table request.
+     email
+     hash_string
+     comment
+     date_created
+     api_key
+     offset
+     records*/
     $options = get_options();
     $body['api_key'] = $options['api_key'];
 
@@ -163,12 +168,6 @@ add_action('admin_menu', 'originstamp_admin_menu');
 add_action('wp_head', 'hashes_for_api_key');
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_action_links');
 
-/*function add_cors_http_header()
-{
-    header("Access-Control-Allow-Origin: *");
-}
-add_action('init', 'add_cors_http_header');*/
-
 function validate_options()
 {
     $options = unserialize(ORIGINSTAMP_SETTINGS);
@@ -210,6 +209,7 @@ function originstamp_admin_page()
 
 function api_key()
 {
+    // Read in API key.
     $options = get_options();
     ?>
     <input title="API key" type="text" name="originstamp[api_key]" size="40" value="<?php echo $options['api_key'] ?>"/>
@@ -218,8 +218,10 @@ function api_key()
     <?php
 }
 
+// TODO: Add a hook to make sure that the user wants to receive Emails.
 function sender_email()
 {
+    // Optional:
     $options = get_options();
     ?>
     <input title="Email" type="text" name="originstamp[email]" size="40" value="<?php echo $options['email'] ?>"/>
@@ -227,13 +229,48 @@ function sender_email()
     <?php
 }
 
-//TODO
 function parse_table($response_json_body)
 {
-    //
+    ?>
+    <?php echo '<table style="display: inline-table;">'?>
+        <?php foreach ($response_json_body->hashes as $hash) {
+        // From milliseconds to seconds.
+        $date_created = $hash->date_created / 1000;
+        $submit_status = $hash->submit_status->multi_seed;
+        $hash_string = $hash->hash_string;
+        echo '<tr>';
+            echo '<td>' . gmdate("Y-m-d H:i:s", $date_created). '</td>';
+        echo '</tr>';
+        echo '<tr>';
+            echo '<td>';
+            echo '<a href="https://originstamp.org/s/'
+                . $hash_string
+                . '"'
+                . ' target="_blank"'
+                . '">'
+                . $hash_string
+                . '</a>';
+            echo '</td>';
+        echo '</tr>';
+        echo '<tr>';
+            echo '<td>';
+            if ($submit_status == 3)
+            {
+                echo '<i class="fa fa-check-circle-o" aria-hidden="true"></i>';
+            }
+            else
+            {
+                echo '<i class="fa fa-clock-o" aria-hidden="true"></i>';
+            }
+            echo '</td>';
+        echo '</tr>';
+    }
+    ?>
+    <?php echo '</table>' ?>
+    <?php
 }
 
-//TODO: Refactor parsing of table.
+//TODO: Find a way to save the content that was hashed and display it.
 function hashes_for_api_key()
 {
     // Maximum number of pages the API will return.
@@ -277,39 +314,9 @@ function hashes_for_api_key()
 
     // Get data from API.
     $response = get_hashes_for_api_key($offset, $limit);
-    $response_json_obj = json_decode($response['body']);
+    $response_json_body = json_decode($response['body']);
 
     // Parse response.
-    ?>
-        <?php echo '<table style="display: inline-table;">'?>
-        <?php echo '<p style="display:inline-table;">' ?>
-            <?php foreach ($response_json_obj->hashes as $hash) {
-                // From milliseconds to seconds.
-                $date_created = $hash->date_created / 1000;
-                $submit_status = $hash->submit_status->multi_seed;
-                $hash_string = $hash->hash_string;
-                echo '<tr>';
-                    echo '<td>' . gmdate("Y-m-d H:i:s", $date_created). '</td>';
-                echo '</tr>';
-                echo '<tr>';
-                    echo '<td>';
-                        echo '<a href="https://originstamp.org/s/'
-                            . $hash_string
-                            . '"'
-                            . ' target="_blank"'
-                            . '">'
-                            . $hash_string
-                            . '</a>';
-                    echo '</td>';
-                echo '</tr>';
-                echo '<tr>';
-                    echo '<td>';
-                        echo '<i class="fa fa-check-circle-o" aria-hidden="true"></i>';
-                    echo '</td>';
-                echo '</tr>';
-            }
-            ?>
-        <?php echo '</table>' ?>
-            <?php
+    parse_table($response_json_body);
 }
 ?>
