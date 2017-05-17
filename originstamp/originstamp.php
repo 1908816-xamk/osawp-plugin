@@ -1,19 +1,5 @@
 <?php
 
-// Add font-awesome styles to Originstamp settings page.
-function admin_register_head() {
-    $siteurl = get_option('siteurl');
-    $url = $siteurl . '/wp-content/plugins/' . basename(dirname(__FILE__)) . '/font-awesome-4.7.0/css/font-awesome.min.css';
-    echo "<link rel='stylesheet' type='text/css' href='$url' />\n";
-}
-add_action('admin_head', 'admin_register_head');
-
-// Define api key and email to save for future uses.
-define("ORIGINSTAMP_SETTINGS", serialize(array(
-    "api_key" => "",
-    "email" => ""
-)));
-
 /**
  * Plugin Name: OriginStamp
  * Plugin URI: http://www.originstamp.org
@@ -45,6 +31,21 @@ define("ORIGINSTAMP_SETTINGS", serialize(array(
 /**
  *  http://wordpress.org/plugins/about/readme.txt, http://generatewp.com/plugin-readme/
  */
+
+
+// Add font-awesome styles to Originstamp settings page.
+function admin_register_head() {
+    // font-awesome repo at cdnjs
+    $url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css';
+    echo "<link rel='stylesheet' type='text/css' href='$url' />\n";
+}
+add_action('admin_head', 'admin_register_head');
+
+// Define api key and email to save for future uses.
+define("ORIGINSTAMP_SETTINGS", serialize(array(
+    "api_key" => "",
+    "email" => ""
+)));
 
 function create_originstamp($post_id)
 {
@@ -162,10 +163,11 @@ add_action('admin_menu', 'originstamp_admin_menu');
 add_action('wp_head', 'hashes_for_api_key');
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_action_links');
 
-function add_cors_http_header(){
+/*function add_cors_http_header()
+{
     header("Access-Control-Allow-Origin: *");
 }
-add_action('init','add_cors_http_header');
+add_action('init', 'add_cors_http_header');*/
 
 function validate_options()
 {
@@ -175,7 +177,8 @@ function validate_options()
 
 function settings_section()
 {
-} // stub
+    //
+}
 
 function get_options()
 {
@@ -209,7 +212,7 @@ function api_key()
 {
     $options = get_options();
     ?>
-    <input type="text" name="originstamp[api_key]" size="40" value="<?php echo $options['api_key'] ?>"/>
+    <input title="API key" type="text" name="originstamp[api_key]" size="40" value="<?php echo $options['api_key'] ?>"/>
     <p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
        <a href="https://www.originstamp.org/dev">https://www.originstamp.org/dev</a></p>
     <?php
@@ -219,11 +222,18 @@ function sender_email()
 {
     $options = get_options();
     ?>
-    <input type="text" name="originstamp[email]" size="40" value="<?php echo $options['email'] ?>"/>
+    <input title="Email" type="text" name="originstamp[email]" size="40" value="<?php echo $options['email'] ?>"/>
     <p class="description"><?php _e('Please provide an Email address so that we can send your data. You need to store your data to be able to verify it.') ?>
     <?php
 }
 
+//TODO
+function parse_table($response_json_body)
+{
+    //
+}
+
+//TODO: Refactor parsing of table.
 function hashes_for_api_key()
 {
     // Maximum number of pages the API will return.
