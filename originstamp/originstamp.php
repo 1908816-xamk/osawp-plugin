@@ -168,12 +168,6 @@ add_action('admin_menu', 'originstamp_admin_menu');
 add_action('wp_head', 'hashes_for_api_key');
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_action_links');
 
-function validate_options()
-{
-    $options = unserialize(ORIGINSTAMP_SETTINGS);
-    return $options;
-}
-
 function settings_section()
 {
     //
@@ -231,17 +225,16 @@ function sender_email()
 
 function parse_table($response_json_body)
 {
-    ?>
-    <?php echo '<table style="display: inline-table;">'?>
-        <?php foreach ($response_json_body->hashes as $hash) {
+
+    echo '<table style="display: inline-table;">';
+    foreach ($response_json_body->hashes as $hash) {
         // From milliseconds to seconds.
         $date_created = $hash->date_created / 1000;
         $submit_status = $hash->submit_status->multi_seed;
         $hash_string = $hash->hash_string;
         echo '<tr>';
             echo '<td>' . gmdate("Y-m-d H:i:s", $date_created). '</td>';
-        echo '</tr>';
-        echo '<tr>';
+
             echo '<td>';
             echo '<a href="https://originstamp.org/s/'
                 . $hash_string
@@ -251,33 +244,37 @@ function parse_table($response_json_body)
                 . $hash_string
                 . '</a>';
             echo '</td>';
-        echo '</tr>';
-        echo '<tr>';
             echo '<td>';
             if ($submit_status == 3)
             {
-                echo '<i class="fa fa-check-circle-o" aria-hidden="true"></i>';
+                echo '<i style="color: rgb(0, 150, 136)" class="fa fa-check-circle-o" aria-hidden="true"></i>';
             }
             else
             {
-                echo '<i class="fa fa-clock-o" aria-hidden="true"></i>';
+                echo '<i style="color: rgb(255, 152, 0)" class="fa fa-clock-o" aria-hidden="true"></i>';
             }
             echo '</td>';
         echo '</tr>';
     }
-    ?>
-    <?php echo '</table>' ?>
-    <?php
+    echo '</table>';
+
 }
 
 //TODO: Find a way to save the content that was hashed and display it.
 function hashes_for_api_key()
 {
     // Maximum number of pages the API will return.
-    $limit = 50;
+    $limit = 25;
 
     // Get first record, to determine, how many records there are overall.
     $get_page_info = get_hashes_for_api_key(0, 1);
+
+    // Handle errors.
+    if (is_wp_error($get_page_info)) {
+        $error_message = $get_page_info->get_error_message();
+        echo 'An error occurred while retrieving hash table:<br/><br/>' . $error_message;
+        return;
+    }
 
     // Extract bory from response.
     $page_info_json_obj = json_decode($get_page_info['body']);
@@ -318,5 +315,8 @@ function hashes_for_api_key()
 
     // Parse response.
     parse_table($response_json_body);
+
+    return;
 }
+
 ?>
