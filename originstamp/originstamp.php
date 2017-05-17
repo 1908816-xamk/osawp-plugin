@@ -54,9 +54,7 @@ function create_originstamp($post_id)
     if (wp_is_post_revision($post_id))
         return;
 
-    $result = get_post($post_id);
-
-    $data = serialize([$result->post_title, $result->post_content]);
+    $data = get_the_title($post_id) . '\n\n' .get_post_field('post_content', $post_id);
     $hash_string = hash('sha256', $data);
     $body['hash_string'] = $hash_string;
 
@@ -96,10 +94,12 @@ function send_to_originstamp_api($body, $hashString)
     return $response;
 }
 
+//TODO: Add visible marker o indicate text that was hashed.
 function send_confirm_email($data, $hash_string)
 {
     // Send confirmation Email to user.
-    $instructions = "Please store this Email. You need to hash following value with a SHA256:\n";
+    // I no Email address provided, nothing will be sent.
+    $instructions = "Please store this Email. You need to hash following value with a SHA256:\n\n";
     $options = get_options();
     if (!$options['email'])
     {
@@ -216,7 +216,6 @@ function api_key()
     <?php
 }
 
-// TODO: Add a hook to make sure that the user wants to receive Emails.
 function sender_email()
 {
     // Optional:
@@ -252,11 +251,25 @@ function parse_table($response_json_body)
             echo '<td>';
             if ($submit_status == 3)
             {
-                echo '<i style="color: rgb(0, 150, 136)" class="fa fa-check-circle-o" aria-hidden="true"></i>';
+                try
+                {
+                    echo '<i style="color: rgb(0, 150, 136)" class="fa fa-check-circle-o" aria-hidden="true"></i>';
+                }
+                catch (Exception $e)
+                {
+                    echo $submit_status;
+                }
             }
             else
             {
-                echo '<i style="color: rgb(255, 152, 0)" class="fa fa-clock-o" aria-hidden="true"></i>';
+                try
+                {
+                    echo '<i style="color: rgb(255, 152, 0)" class="fa fa-clock-o" aria-hidden="true"></i>';
+                }
+                catch (Exception $e)
+                {
+                    echo $submit_status;
+                }
             }
             echo '</td>';
         echo '</tr>';
