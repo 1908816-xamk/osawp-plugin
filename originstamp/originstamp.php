@@ -101,6 +101,10 @@ function send_confirm_email($data, $hash_string)
     // Send confirmation Email to user.
     $instructions = "Please store this Email. You need to hash following value with a SHA256:\n";
     $options = get_options();
+    if (!$options['email'])
+    {
+        return '';
+    }
     $response = wp_mail($options['email'], "OriginStamp " . $hash_string, $instructions . $data);
 
     return $response;
@@ -227,6 +231,7 @@ function parse_table($response_json_body)
 {
 
     echo '<table style="display: inline-table;">';
+    echo '<tr><th>Date created</th><th>Hash string (SHA256)</th><th>Status</th></tr>';
     foreach ($response_json_body->hashes as $hash) {
         // From milliseconds to seconds.
         $date_created = $hash->date_created / 1000;
