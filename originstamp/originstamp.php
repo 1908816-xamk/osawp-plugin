@@ -51,8 +51,8 @@ function create_hash_data_table() {
 
     $sql = "CREATE TABLE $table_name (
 		sha256 varchar(64) UNIQUE NOT NULL,
-		time datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        post_title text NOT NULL,
+		time datetime DEFAULT CURRENT_TIMESTAMP,
+        post_title tinytext NOT NULL,
         post_content text NOT NULL,
 		PRIMARY KEY (sha256)
 	) $charset_collate;";
@@ -73,13 +73,17 @@ function create_hash_data_table() {
     }
 }
 
-// TODO
 function insert_hash_in_table($hash_string, $post_title, $post_content)
 {
     global $wpdb;
+
+    $table_name = $wpdb->prefix . get_option('db_table_name');
+    $wpdb->insert($table_name,
+        array('sha256' => $hash_string, 'post_title' => $post_title, 'post_content' => $post_content),
+        array('%s', '%s', '%s'));
 }
 
-// Add uninstallation hook to delete data table.
+// Add uninstallation hook to delete data table after removing Plugin.
 register_uninstall_hook(__FILE__, 'on_uninstall');
 function on_uninstall()
 {
@@ -98,16 +102,20 @@ function admin_register_head() {
 }
 add_action('admin_head', 'admin_register_head');
 
-//TODO: Check, what is hashed and what we really need to hash.
 function create_originstamp($post_id)
 {
     // Create a SHA256 value from WP post or edit.
     if (wp_is_post_revision($post_id))
         return;
 
-    $data = get_the_title($post_id) . '\n\n' .get_post_field('post_content', $post_id);
+    $title = get_the_title($post_id);
+    $content = get_post_field('post_content', $post_id);
+
+    $data = $title . "\n\n" . $content;
     $hash_string = hash('sha256', $data);
     $body['hash_string'] = $hash_string;
+
+    insert_hash_in_table($hash_string, $title, $content);
 
     send_to_originstamp_api($body, $hash_string);
     send_confirm_email($data, $hash_string);
@@ -151,12 +159,15 @@ function send_confirm_email($data, $hash_string)
     // Send confirmation Email to user.
     // I no Email address provided, nothing will be sent.
     $instructions = "Please store this Email. You need to hash following value with a SHA256:\n\n";
+    $header = "================ START TEXT =================\n";
+    $footer = "\n================ END TEXT ===================";
     $options = get_options();
     if (!$options['email'])
     {
         return '';
     }
-    $response = wp_mail($options['email'], "OriginStamp " . $hash_string, $instructions . $data);
+    $msg = $instructions . $header .$data . $footer;
+    $response = wp_mail($options['email'], "OriginStamp " . $hash_string, $msg);
 
     return $response;
 }
@@ -229,7 +240,6 @@ function settings_section()
     //
 }
 
-//TODO: Store table name in a global variable and go for a regex to create it.
 function get_db_status()
 {
     global $wpdb;
@@ -294,6 +304,7 @@ function sender_email()
     <?php
 }
 
+// TODO: Add hashed data and display it.
 function parse_table($response_json_body)
 {
     echo '<table style="display: inline-table;">';
