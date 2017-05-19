@@ -46,7 +46,9 @@ function create_hash_data_table() {
     global $wpdb;
 
     $charset_collate = $wpdb->get_charset_collate();
-    $table_name = $wpdb->prefix . 'hash_data';
+    add_option("db_table_name", 'hash_data');
+    $table_name = $wpdb->prefix . get_option('db_table_name');
+
     $sql = "CREATE TABLE $table_name (
 		sha256 varchar(64) UNIQUE NOT NULL,
 		time datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -79,10 +81,13 @@ function insert_hash_in_table($hash_string, $post_title, $post_content)
 
 // Add uninstallation hook to delete data table.
 register_uninstall_hook(__FILE__, 'on_uninstall');
-// TODO
 function on_uninstall()
 {
+    global $wpdb;
 
+    $table_name = $wpdb->prefix . get_option('db_table_name');
+    $sql = 'DROP TABLE IF EXISTS ' .  $table_name;
+    $wpdb->query($sql);
 }
 
 // Add font-awesome styles to Originstamp settings page.
@@ -228,10 +233,10 @@ function settings_section()
 function get_db_status()
 {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'hash_data';
+    $table_name = $wpdb->prefix . get_option('db_table_name');
     if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name)
     {
-        echo '<p style="color: rgb(0, 150, 136)">Database online, table created: ' . $table_name . '.</p>';
+        echo '<p style="color: rgb(0, 150, 136)">Database table created: "' . $table_name . '".</p>';
     }
     else
     {
@@ -291,7 +296,6 @@ function sender_email()
 
 function parse_table($response_json_body)
 {
-
     echo '<table style="display: inline-table;">';
     echo '<tr><th>Date created</th><th>Hash string (SHA256)</th><th>Status</th></tr>';
     foreach ($response_json_body->hashes as $hash) {
@@ -338,7 +342,6 @@ function parse_table($response_json_body)
         echo '</tr>';
     }
     echo '</table>';
-
 }
 
 //TODO: Find a way to save the content that was hashed and display it.
