@@ -33,6 +33,58 @@
  */
 
 
+// Define api key and email to save for future uses.
+define("ORIGINSTAMP_SETTINGS", serialize(array(
+    "api_key" => "",
+    "email" => ""
+)));
+
+//TODO: Check version of DB, add table name to options.
+// Add a custom table to DB to store hashed data.
+register_activation_hook( __FILE__, 'create_hash_data_table' );
+function create_hash_data_table() {
+    global $wpdb;
+
+    $charset_collate = $wpdb->get_charset_collate();
+    $table_name = $wpdb->prefix . 'hash_data';
+    $sql = "CREATE TABLE $table_name (
+		sha256 varchar(64) UNIQUE NOT NULL,
+		time datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        post_title text NOT NULL,
+        post_content text NOT NULL,
+		PRIMARY KEY (sha256)
+	) $charset_collate;";
+
+    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+    try
+    {
+        $res = dbDelta($sql);
+        if (!$res)
+        {
+            echo 'Database table could not be created!';
+        }
+    }
+    catch (Exception $e)
+    {
+        echo 'An error occurred while creating data table:\n\n' . $e;
+    }
+}
+
+// TODO
+function insert_hash_in_table($hash_string, $post_title, $post_content)
+{
+    global $wpdb;
+}
+
+// Add uninstallation hook to delete data table.
+register_uninstall_hook(__FILE__, 'on_uninstall');
+// TODO
+function on_uninstall()
+{
+
+}
+
 // Add font-awesome styles to Originstamp settings page.
 function admin_register_head() {
     // font-awesome repo at cdnjs
@@ -40,12 +92,6 @@ function admin_register_head() {
     echo "<link rel='stylesheet' type='text/css' href='$url' />\n";
 }
 add_action('admin_head', 'admin_register_head');
-
-// Define api key and email to save for future uses.
-define("ORIGINSTAMP_SETTINGS", serialize(array(
-    "api_key" => "",
-    "email" => ""
-)));
 
 //TODO: Check, what is hashed and what we really need to hash.
 function create_originstamp($post_id)
@@ -94,7 +140,7 @@ function send_to_originstamp_api($body, $hashString)
     return $response;
 }
 
-//TODO: Add visible marker o indicate text that was hashed.
+//TODO: Add visible marker to indicate text that was hashed.
 function send_confirm_email($data, $hash_string)
 {
     // Send confirmation Email to user.
@@ -163,6 +209,7 @@ function originstamp_admin_menu()
     add_settings_section('originstamp', __('Settings'), 'settings_section', 'originstamp');
     add_settings_field('originstamp_api_key', __('API Key'), 'api_key', 'originstamp', 'originstamp');
     add_settings_field('originstamp_sender_email', __('Sender Email'), 'sender_email', 'originstamp', 'originstamp');
+    add_settings_field('originstamp_db_status', __('DB status'), 'get_db_status', 'originstamp', 'originstamp');
     add_settings_field('oroginstamp_hash_table', __('Hash table'), 'hashes_for_api_key', 'originstamp', 'originstamp');
     add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'originstamp', 'originstamp_admin_page');
 }
@@ -175,6 +222,22 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_acti
 function settings_section()
 {
     //
+}
+
+//TODO: Store table name in a global variable and go for a regex to create it.
+function get_db_status()
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'hash_data';
+    if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name)
+    {
+        echo '<p style="color: rgb(0, 150, 136)">Database online, table created: ' . $table_name . '.</p>';
+    }
+    else
+    {
+        echo '<p style="color: rgb(255, 152, 0)">ERROR: Data table does not exist!</p>';
+    }
+    echo '<p class="description">Here you can check status of the database that stores hashed post data.</p>';
 }
 
 function get_options()
@@ -286,11 +349,13 @@ function hashes_for_api_key()
 
     // Get first record, to determine, how many records there are overall.
     $get_page_info = get_hashes_for_api_key(0, 1);
+    if (!$get_page_info)
+        return;
 
     // Handle errors.
     if (is_wp_error($get_page_info)) {
         $error_message = $get_page_info->get_error_message();
-        echo 'An error occurred while retrieving hash table:<br/><br/>' . $error_message;
+        echo '<p style="color: rgb(255, 152, 0)">An error occurred while retrieving hash table:</p><br/>' . $error_message;
         return;
     }
 
