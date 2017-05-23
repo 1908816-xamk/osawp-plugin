@@ -39,6 +39,14 @@ define("ORIGINSTAMP_SETTINGS", serialize(array(
     "email" => ""
 )));
 
+// Add font-awesome styles to Originstamp settings page.
+function admin_register_head() {
+    // font-awesome repo at cdnjs
+    $url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css';
+    echo "<link rel='stylesheet' type='text/css' href='$url' />\n";
+}
+add_action('admin_head', 'admin_register_head');
+
 //TODO: Check version of DB, add table name to options.
 // Add a custom table to DB to store hashed data.
 register_activation_hook( __FILE__, 'create_hash_data_table' );
@@ -89,7 +97,7 @@ function retrieve_hash_from_table($hash_string)
     $table_name = $wpdb->prefix . get_option('db_table_name');
     $sql = "SELECT * FROM $table_name WHERE sha256 = \"$hash_string\"";
     $result = $wpdb->get_row($sql);
-    $data = wp_strip_all_tags($result->post_title) . "\n\n" . wp_strip_all_tags($result->post_content);
+    $data = $result->post_title . $result->post_content;
 
     return $data;
 }
@@ -105,13 +113,23 @@ function on_uninstall()
     $wpdb->query($sql);
 }
 
-// Add font-awesome styles to Originstamp settings page.
-function admin_register_head() {
-    // font-awesome repo at cdnjs
-    $url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css';
-    echo "<link rel='stylesheet' type='text/css' href='$url' />\n";
+add_action('init', 'download_hash_data');
+add_action('template_redirect', 'download_hash_data');
+function download_hash_data() {
+    if (isset($_GET['d']))
+    {
+        $hash_string = $_GET['d'];
+        $data = retrieve_hash_from_table($hash_string);
+        if (!$data)
+            exit('Hash string not found in database.');
+        header("Content-type: application/x-msdownload",true,200);
+        header("Content-Disposition: attachment; filename=$hash_string.txt");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+        echo $data;
+        exit();
+    }
 }
-add_action('admin_head', 'admin_register_head');
 
 function create_originstamp($post_id)
 {
@@ -373,7 +391,7 @@ function parse_table($response_json_body)
             }
             echo '</td>';
             echo '<td>';
-                echo 'download';
+                echo "<a href=\"?page=originstamp&d=$hash_string\" title=\"download\" target=\"_blank\">download</a>";
             echo '</td>';
         echo '</tr>';
     }
