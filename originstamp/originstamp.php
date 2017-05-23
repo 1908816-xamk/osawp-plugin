@@ -53,7 +53,7 @@ function create_hash_data_table() {
 		sha256 varchar(64) UNIQUE NOT NULL,
 		time datetime DEFAULT CURRENT_TIMESTAMP,
         post_title tinytext NOT NULL,
-        post_content text NOT NULL,
+        post_content longtext NOT NULL,
 		PRIMARY KEY (sha256)
 	) $charset_collate;";
 
@@ -64,12 +64,12 @@ function create_hash_data_table() {
         $res = dbDelta($sql);
         if (!$res)
         {
-            echo 'Database table could not be created!';
+            echo "Database table could not be created!";
         }
     }
     catch (Exception $e)
     {
-        echo 'An error occurred while creating data table:\n\n' . $e;
+        echo "An error occurred while creating data table:\n\n" . $e;
     }
 }
 
@@ -80,7 +80,18 @@ function insert_hash_in_table($hash_string, $post_title, $post_content)
     $table_name = $wpdb->prefix . get_option('db_table_name');
     $wpdb->insert($table_name,
         array('sha256' => $hash_string, 'post_title' => $post_title, 'post_content' => $post_content),
-        array('%s', '%s', '%s'));
+        array());
+}
+
+function retrieve_hash_from_table($hash_string)
+{
+    global $wpdb;
+    $table_name = $wpdb->prefix . get_option('db_table_name');
+    $sql = "SELECT * FROM $table_name WHERE sha256 = \"$hash_string\"";
+    $result = $wpdb->get_row($sql);
+    $data = wp_strip_all_tags($result->post_title) . "\n\n" . wp_strip_all_tags($result->post_content);
+
+    return $data;
 }
 
 // Add uninstallation hook to delete data table after removing Plugin.
@@ -107,11 +118,16 @@ function create_originstamp($post_id)
     // Create a SHA256 value from WP post or edit.
     if (wp_is_post_revision($post_id))
         return;
+    $title = preg_replace(
+            "/[\n\r ]+/",//Also more than one space
+            " ",//space
+            wp_strip_all_tags(get_the_title($post_id)));
+    $content = preg_replace(
+            "/[\n\r ]+/",//Also more than one space
+            " ",//space
+            wp_strip_all_tags(get_post_field('post_content', $post_id)));
 
-    $title = get_the_title($post_id);
-    $content = get_post_field('post_content', $post_id);
-
-    $data = $title . "\n\n" . $content;
+    $data = $title . $content;
     $hash_string = hash('sha256', $data);
     $body['hash_string'] = $hash_string;
 
@@ -153,7 +169,6 @@ function send_to_originstamp_api($body, $hashString)
     return $response;
 }
 
-//TODO: Add visible marker to indicate text that was hashed.
 function send_confirm_email($data, $hash_string)
 {
     // Send confirmation Email to user.
@@ -167,7 +182,13 @@ function send_confirm_email($data, $hash_string)
         return '';
     }
     $msg = $instructions . $header .$data . $footer;
-    $response = wp_mail($options['email'], "OriginStamp " . $hash_string, $msg);
+    $headers = "Content-type: text/plain";
+    $temp = fopen('php://temp', 'w+');
+    fwrite($temp, $data);
+    rewind($temp);
+    fpassthru($temp);
+    $response = wp_mail($options['email'], "OriginStamp " . $hash_string, $msg, $headers, array($temp));
+    fclose($temp);
 
     return $response;
 }
@@ -308,12 +329,13 @@ function sender_email()
 function parse_table($response_json_body)
 {
     echo '<table style="display: inline-table;">';
-    echo '<tr><th>Date created</th><th>Hash string (SHA256)</th><th>Status</th></tr>';
+    echo '<tr><th>Date created</th><th>Hash string (SHA256)</th><th>Status</th><th>Data</th></tr>';
     foreach ($response_json_body->hashes as $hash) {
         // From milliseconds to seconds.
         $date_created = $hash->date_created / 1000;
         $submit_status = $hash->submit_status->multi_seed;
         $hash_string = $hash->hash_string;
+        $db_res = retrieve_hash_from_table($hash_string);
         echo '<tr>';
             echo '<td>' . gmdate("Y-m-d H:i:s", $date_created). '</td>';
 
@@ -349,6 +371,9 @@ function parse_table($response_json_body)
                     echo $submit_status;
                 }
             }
+            echo '</td>';
+            echo '<td>';
+                echo 'download';
             echo '</td>';
         echo '</tr>';
     }

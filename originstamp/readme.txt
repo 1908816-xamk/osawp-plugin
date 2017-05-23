@@ -44,3 +44,6 @@ Visit 'Settings > OriginStamp' and adjust your configuration.
 
 = 0.0.4 =
 * Table of timestamps implemented.
+
+= 0.0.5 =
+* DB table implemented to store hashed data.
