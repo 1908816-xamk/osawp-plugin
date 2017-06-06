@@ -47,7 +47,6 @@ function admin_register_head() {
 }
 add_action('admin_head', 'admin_register_head');
 
-//TODO: Check version of DB, add table name to options.
 // Add a custom table to DB to store hashed data.
 register_activation_hook( __FILE__, 'create_hash_data_table' );
 function create_hash_data_table() {
@@ -284,11 +283,13 @@ function description()
 {
     echo '<p> This plugin saves and stores every single stage of your posts. Anytime you hit the save button while creating or editing a post, we will save the stage of your work in local data table. The timestamp is secure within the Bitcoin network and verifiable to anyone who is in possession of a coyp of the data.</p><br>';
     echo '<p> <b>What content is saved?</b>';
-    echo '<p class="description">We save the post title, the post body as plain text where all layout tags and line breaks are removed.</p>';
+    echo '<p class="description">We save the post title, the post body as plain text where all layout tags. Line breaks are converted to spaces.</p>';
     echo '<p> <b>What content is timestamped?</b>';
     echo '<p class="description">We save the post title, the post body as plain text. To hash the post we concatenate the post title and the post body with a space in between. The sha256 of the generated string is being sent to originStamp to be timestamped.</p>';
     echo '<p> <b>How to verify a timestamp?</b>';
     echo '<p class="description">In order to verify the timestamp you would have to download the data, copy the string that is stored in the text file and then use any sha256 calculator of your choice to hash the string. After that go to OriginStamp and search for the hash. There you will also find further instructions and features.</p>';
+    echo '<p><b>Where do I get more Information?</b></p>';
+    echo '<p>Please visit <a href="https://app.originstamp.org/faq">OriginStamp FAQ.</a></p>';
 }
 
 function get_db_status()
