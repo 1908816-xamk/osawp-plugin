@@ -262,11 +262,12 @@ function originstamp_admin_menu()
     register_setting('originstamp', 'originstamp');
 
     add_settings_section('originstamp', __('Settings'), 'settings_section', 'originstamp');
+    add_settings_field('originstamp_description', __('Description'), 'description', 'originstamp', 'originstamp');
     add_settings_field('originstamp_api_key', __('API Key'), 'api_key', 'originstamp', 'originstamp');
     add_settings_field('originstamp_sender_email', __('Sender Email'), 'sender_email', 'originstamp', 'originstamp');
+    add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'originstamp', 'originstamp_admin_page');
     add_settings_field('originstamp_db_status', __('DB status'), 'get_db_status', 'originstamp', 'originstamp');
     add_settings_field('oroginstamp_hash_table', __('Hash table'), 'hashes_for_api_key', 'originstamp', 'originstamp');
-    add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'originstamp', 'originstamp_admin_page');
 }
 
 add_action('save_post', 'create_originstamp');
@@ -276,7 +277,18 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_acti
 
 function settings_section()
 {
-    //
+    ;
+}
+
+function description()
+{
+    echo '<p> This plugin saves and stores every single stage of your posts. Anytime you hit the save button while creating or editing a post, we will save the stage of your work in local data table. The timestamp is secure within the Bitcoin network and verifiable to anyone who is in possession of a coyp of the data.</p><br>';
+    echo '<p> <b>What content is saved?</b>';
+    echo '<p class="description">We save the post title, the post body as plain text where all layout tags and line breaks are removed.</p>';
+    echo '<p> <b>What content is timestamped?</b>';
+    echo '<p class="description">We save the post title, the post body as plain text. To hash the post we concatenate the post title and the post body with a space in between. The sha256 of the generated string is being sent to originStamp to be timestamped.</p>';
+    echo '<p> <b>How to verify a timestamp?</b>';
+    echo '<p class="description">In order to verify the timestamp you would have to download the data, copy the string that is stored in the text file and then use any sha256 calculator of your choice to hash the string. After that go to OriginStamp and search for the hash. There you will also find further instructions and features.</p>';
 }
 
 function get_db_status()
@@ -343,7 +355,6 @@ function sender_email()
     <?php
 }
 
-// TODO: Add hashed data and display it.
 function parse_table($response_json_body)
 {
     echo '<table style="display: inline-table;">';
@@ -398,7 +409,6 @@ function parse_table($response_json_body)
     echo '</table>';
 }
 
-//TODO: Find a way to save the content that was hashed and display it.
 function hashes_for_api_key()
 {
     // Maximum number of pages the API will return.
