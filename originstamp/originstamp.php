@@ -32,8 +32,6 @@
  *  http://wordpress.org/plugins/about/readme.txt, http://generatewp.com/plugin-readme/
  */
 
-echo '<!--Authors: Thomas Hepp, André Gernandt, Eugen Stroh-->';
-
 // Define api key and email to save for future uses.
 define("ORIGINSTAMP_SETTINGS", serialize(array(
     "api_key" => "",
