@@ -6,7 +6,7 @@
  * Description: Creates a tamper-proof timestamp of your content each time it is modified. The timestamp is created with the Bitcoin blockchain.
  * Version: 0.3
  * Author: Thomas Hepp, André Gernandt, Eugen Stroh
- * Author URI: https://github.com/thhepp/
+ * Author URI: https://github.com/thhepp/, https://github.com/ager, https://github.com/eustro
  * License: The MIT License (MIT)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,6 +32,7 @@
  *  http://wordpress.org/plugins/about/readme.txt, http://generatewp.com/plugin-readme/
  */
 
+echo '<!--Authors: Thomas Hepp, André Gernandt, Eugen Stroh-->';
 
 // Define api key and email to save for future uses.
 define("ORIGINSTAMP_SETTINGS", serialize(array(
@@ -267,6 +268,7 @@ function originstamp_admin_menu()
     add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'originstamp', 'originstamp_admin_page');
     add_settings_field('originstamp_db_status', __('DB status'), 'get_db_status', 'originstamp', 'originstamp');
     add_settings_field('oroginstamp_hash_table', __('Hash table'), 'hashes_for_api_key', 'originstamp', 'originstamp');
+    add_settings_field('originstamp_dev', __('Developers'), 'dev_info', 'originstamp', 'originstamp');
 }
 
 add_action('save_post', 'create_originstamp');
@@ -279,6 +281,40 @@ function settings_section()
     ;
 }
 
+function dev_info()
+{
+    echo 'Visit us on <a href="https://app.originstamp.org/home">https://app.originstamp.org/home</a><br><br>';
+    echo 'Or contact us:<br>';
+    echo '<table id="dev_info" style="display: inline-table;">';
+    echo '<tr>';
+        echo '<td>';
+            echo 'Thomas Hepp';
+        echo '</td>';
+        echo '<td>';
+            echo '<a target="_top" href="mailto:thomas.hepp@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>';
+        echo '</td>';
+    echo '</tr>';
+
+    echo '<tr>';
+        echo '<td>';
+            echo 'André Gernandt';
+        echo '</td>';
+        echo '<td>';
+            echo '<a target="_top" href="mailto:andre.gernandt@gmail.com?Subject=OriginStamp-wp%20plugin">contact</a>';
+        echo '</td>';
+        echo '</tr>';
+
+    echo '<tr>';
+        echo '<td>';
+            echo 'Eugen Stroh';
+        echo '</td>';
+        echo '<td>';
+            echo '<a target="_top" href="mailto:eugen.stroh@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>';
+        echo '</td>';
+    echo '</tr>';
+    echo '</table>';
+}
+
 function description()
 {
     echo '<p> This plugin saves and stores every single stage of your posts. Anytime you hit the save button while creating or editing a post, we will save the stage of your work in local data table. The timestamp is secure within the Bitcoin network and verifiable to anyone who is in possession of a coyp of the data.</p><br>';
@@ -289,7 +325,9 @@ function description()
     echo '<p> <b>How to verify a timestamp?</b>';
     echo '<p class="description">In order to verify the timestamp you would have to download the data, copy the string that is stored in the text file and then use any sha256 calculator of your choice to hash the string. After that go to OriginStamp and search for the hash. There you will also find further instructions and features.</p>';
     echo '<p><b>Where do I get more Information?</b></p>';
-    echo '<p>Please visit <a href="https://app.originstamp.org/faq">OriginStamp FAQ.</a></p>';
+    echo '<p>Please visit <a target="_blank" href="https://app.originstamp.org/faq">OriginStamp FAQ.</a></p>';
+    echo '<p><b>You still got questions?</b></p>';
+    echo '<p>Fee free to contact us, our emails are provide in the develpoer information on the bottom of this page.</p>';
 }
 
 function get_db_status()
@@ -323,7 +361,6 @@ function originstamp_admin_page()
                 <p><?php  ?></p>
             </div>
         <?php endif; ?>
-
         <form action="options.php" method="post">
             <?php settings_fields('originstamp'); ?>
             <?php do_settings_sections('originstamp'); ?>
@@ -342,7 +379,9 @@ function api_key()
     ?>
     <input title="API key" type="text" name="originstamp[api_key]" size="40" value="<?php echo $options['api_key'] ?>"/>
     <p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
-       <a href="https://www.originstamp.org/dev">https://www.originstamp.org/dev</a></p>
+        <a href="https://originstamp.org/dev">
+            <i class="fa fa-sign-in" aria-hidden="true"></i>
+        </a></p>
     <?php
 }
 
