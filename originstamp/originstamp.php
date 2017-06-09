@@ -1,10 +1,10 @@
 <?php
 
-/**
+/*
  * Plugin Name: OriginStamp
  * Plugin URI: http://www.originstamp.org
  * Description: Creates a tamper-proof timestamp of your content each time it is modified. The timestamp is created with the Bitcoin blockchain.
- * Version: 0.3
+ * Version: 0.0.5
  * Author: Thomas Hepp, André Gernandt, Eugen Stroh
  * Author URI: https://github.com/thhepp/, https://github.com/ager, https://github.com/eustro
  * License: The MIT License (MIT)
@@ -28,9 +28,9 @@
  * THE SOFTWARE.
  */
 
-/**
- *  http://wordpress.org/plugins/about/readme.txt, http://generatewp.com/plugin-readme/
- */
+defined( 'ABSPATH' ) OR exit;
+
+define( 'OS_BTC_TS', plugins_url( __FILE__ ) );
 
 // Define api key and email to save for future uses.
 define("ORIGINSTAMP_SETTINGS", serialize(array(
@@ -46,9 +46,12 @@ function admin_register_head() {
 }
 add_action('admin_head', 'admin_register_head');
 
-// Add a custom table to DB to store hashed data.
 register_activation_hook( __FILE__, 'create_hash_data_table' );
 function create_hash_data_table() {
+    // Create data table for local storage at activation.
+    if (! current_user_can('activate_plugins'))
+        return;
+
     global $wpdb;
 
     $charset_collate = $wpdb->get_charset_collate();
@@ -63,19 +66,114 @@ function create_hash_data_table() {
 		PRIMARY KEY (sha256)
 	) $charset_collate;";
 
-    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+    if (is_admin())
+        require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 
     try
     {
         $res = dbDelta($sql);
         if (!$res)
         {
-            echo "Database table could not be created!";
+            return;
         }
     }
     catch (Exception $e)
     {
-        echo "An error occurred while creating data table:\n\n" . $e;
+        return;
+    }
+}
+
+register_uninstall_hook(__FILE__, 'on_uninstall');
+function on_uninstall()
+{
+    // Remove local data talbe with all content.
+    if ( ! current_user_can( 'install_plugins' ) )
+        return;
+    if ( __FILE__ != WP_UNINSTALL_PLUGIN )
+        return;
+    check_admin_referer( 'bulk-plugins' );
+
+    global $wpdb;
+
+    $table_name = $wpdb->prefix . get_option('db_table_name');
+    $sql = 'DROP TABLE IF EXISTS ' .  $table_name;
+    $wpdb->query($sql);
+
+    delete_option('originstamp');
+}
+
+function originstamp_admin_menu()
+{
+    register_setting('originstamp', 'originstamp');
+
+    add_settings_section('originstamp', __('Settings'), 'settings_section', 'originstamp');
+    add_settings_field('originstamp_description', __('Description'), 'description', 'originstamp', 'originstamp');
+    add_settings_field('originstamp_api_key', __('API Key'), 'api_key', 'originstamp', 'originstamp');
+    add_settings_field('originstamp_sender_email', __('Sender Email'), 'sender_email', 'originstamp', 'originstamp');
+    add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'originstamp', 'originstamp_admin_page');
+    add_settings_field('originstamp_db_status', __('DB status'), 'get_db_status', 'originstamp', 'originstamp');
+    add_settings_field('oroginstamp_hash_table', __('Hash table'), 'hashes_for_api_key', 'originstamp', 'originstamp');
+    add_settings_field('originstamp_dev', __('Developers'), 'dev_info', 'originstamp', 'originstamp');
+}
+add_action('save_post', 'create_originstamp');
+add_action('admin_menu', 'originstamp_admin_menu');
+add_action('wp_head', 'hashes_for_api_key');
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_action_links');
+
+function originstamp_action_links($links)
+{
+    array_unshift($links, '<a href="' . admin_url('options-general.php?page=originstamp') . '">Settings</a>');
+    return $links;
+}
+
+function settings_section()
+{
+    ;
+}
+
+function get_options()
+{
+    $options = (array)get_option('originstamp');
+    return $options;
+}
+
+function originstamp_admin_page()
+{
+    ?>
+    <div class="wrap">
+        <h2><?php _e('OriginStamp'); ?></h2>
+        <?php if (!empty($options['invalid_emails']) && $_GET['settings-updated']) : ?>
+            <div class="error">
+                <p><?php  ?></p>
+            </div>
+        <?php endif; ?>
+        <form action="options.php" method="post">
+            <?php settings_fields('originstamp'); ?>
+            <?php do_settings_sections('originstamp'); ?>
+            <p class="submit">
+                <input type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>"/>
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
+add_action('init', 'download_hash_data');
+add_action('template_redirect', 'download_hash_data');
+function download_hash_data() {
+    // Download a data set from plugin data table.
+    if (isset($_GET['d']))
+    {
+        $hash_string = $_GET['d'];
+        $data = retrieve_hash_from_table($hash_string);
+        if (!$data)
+            exit('Hash string not found in database.');
+        header("Content-type: application/x-msdownload",true,200);
+        header("Content-Disposition: attachment; filename=$hash_string.txt");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+        echo $data;
+        exit();
     }
 }
 
@@ -98,35 +196,6 @@ function retrieve_hash_from_table($hash_string)
     $data = $result->post_title . $result->post_content;
 
     return $data;
-}
-
-// Add uninstallation hook to delete data table after removing Plugin.
-register_uninstall_hook(__FILE__, 'on_uninstall');
-function on_uninstall()
-{
-    global $wpdb;
-
-    $table_name = $wpdb->prefix . get_option('db_table_name');
-    $sql = 'DROP TABLE IF EXISTS ' .  $table_name;
-    $wpdb->query($sql);
-}
-
-add_action('init', 'download_hash_data');
-add_action('template_redirect', 'download_hash_data');
-function download_hash_data() {
-    if (isset($_GET['d']))
-    {
-        $hash_string = $_GET['d'];
-        $data = retrieve_hash_from_table($hash_string);
-        if (!$data)
-            exit('Hash string not found in database.');
-        header("Content-type: application/x-msdownload",true,200);
-        header("Content-Disposition: attachment; filename=$hash_string.txt");
-        header("Pragma: no-cache");
-        header("Expires: 0");
-        echo $data;
-        exit();
-    }
 }
 
 function create_originstamp($post_id)
@@ -209,12 +278,6 @@ function send_confirm_email($data, $hash_string)
     return $response;
 }
 
-function originstamp_action_links($links)
-{
-    array_unshift($links, '<a href="' . admin_url('options-general.php?page=originstamp') . '">Settings</a>');
-    return $links;
-}
-
 function get_hashes_for_api_key($offset, $records)
 {
     // Get hash table for API key.
@@ -255,77 +318,55 @@ function get_hashes_for_api_key($offset, $records)
     return $response;
 }
 
-function originstamp_admin_menu()
-{
-    register_setting('originstamp', 'originstamp');
-
-    add_settings_section('originstamp', __('Settings'), 'settings_section', 'originstamp');
-    add_settings_field('originstamp_description', __('Description'), 'description', 'originstamp', 'originstamp');
-    add_settings_field('originstamp_api_key', __('API Key'), 'api_key', 'originstamp', 'originstamp');
-    add_settings_field('originstamp_sender_email', __('Sender Email'), 'sender_email', 'originstamp', 'originstamp');
-    add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'originstamp', 'originstamp_admin_page');
-    add_settings_field('originstamp_db_status', __('DB status'), 'get_db_status', 'originstamp', 'originstamp');
-    add_settings_field('oroginstamp_hash_table', __('Hash table'), 'hashes_for_api_key', 'originstamp', 'originstamp');
-    add_settings_field('originstamp_dev', __('Developers'), 'dev_info', 'originstamp', 'originstamp');
-}
-
-add_action('save_post', 'create_originstamp');
-add_action('admin_menu', 'originstamp_admin_menu');
-add_action('wp_head', 'hashes_for_api_key');
-add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_action_links');
-
-function settings_section()
-{
-    ;
-}
-
 function dev_info()
 {
-    echo 'Visit us on <a href="https://app.originstamp.org/home">https://app.originstamp.org/home</a><br><br>';
-    echo 'Or contact us:<br>';
-    echo '<table id="dev_info" style="display: inline-table;">';
-    echo '<tr>';
-        echo '<td>';
-            echo 'Thomas Hepp';
-        echo '</td>';
-        echo '<td>';
-            echo '<a target="_top" href="mailto:thomas.hepp@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>';
-        echo '</td>';
-    echo '</tr>';
-
-    echo '<tr>';
-        echo '<td>';
-            echo 'André Gernandt';
-        echo '</td>';
-        echo '<td>';
-            echo '<a target="_top" href="mailto:andre.gernandt@gmail.com?Subject=OriginStamp-wp%20plugin">contact</a>';
-        echo '</td>';
-        echo '</tr>';
-
-    echo '<tr>';
-        echo '<td>';
-            echo 'Eugen Stroh';
-        echo '</td>';
-        echo '<td>';
-            echo '<a target="_top" href="mailto:eugen.stroh@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>';
-        echo '</td>';
-    echo '</tr>';
-    echo '</table>';
+    ?>
+    Visit us on <a href="https://app.originstamp.org/home">https://app.originstamp.org/home</a><br><br>
+    Or contact us:<br>
+    <table id="dev_info" style="display: inline-table;">
+    <tr>
+        <td>
+            Thomas Hepp
+        </td>
+        <td>
+            <a target="_top" href="mailto:thomas.hepp@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            André Gernandt
+        </td>
+        <td>
+            <a target="_top" href="mailto:andre.gernandt@gmail.com?Subject=OriginStamp-wp%20plugin">contact</a>
+        </td>
+    </tr
+    <tr>
+        <td>
+            Eugen Stroh
+        </td>
+        <td>
+            <a target="_top" href="mailto:eugen.stroh@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>
+        </td>
+    </tr>
+    </table>
+    <?php
 }
 
 function description()
 {
-    echo '<p> This plugin saves and stores every single stage of your posts. Anytime you hit the save button while creating or editing a post, we will save the stage of your work in local data table. The timestamp is secure within the Bitcoin network and verifiable to anyone who is in possession of a coyp of the data.</p><br>';
-    echo '<p> <b>What content is saved?</b>';
-    echo '<p class="description">We save the post title, the post body as plain text where all layout tags. Line breaks are converted to spaces.</p>';
-    echo '<p> <b>What content is timestamped?</b>';
-    echo '<p class="description">We save the post title, the post body as plain text. To hash the post we concatenate the post title and the post body with a space in between. The sha256 of the generated string is being sent to originStamp to be timestamped.</p>';
-    echo '<p> <b>How to verify a timestamp?</b>';
-    echo '<p class="description">In order to verify the timestamp you would have to download the data, copy the string that is stored in the text file and then use any sha256 calculator of your choice to hash the string. After that go to OriginStamp and search for the hash. There you will also find further instructions and features.</p>';
-    echo '<p><b>Where do I get more Information?</b></p>';
-    echo '<p>Please visit <a target="_blank" href="https://app.originstamp.org/faq">OriginStamp FAQ.</a></p>';
-    echo '<p><b>You still got questions?</b></p>';
-    echo '<p>Fee free to contact us, our emails are provide in the develpoer information on the bottom of this page.</p>';
+    ?>
+    <p> This plugin saves and stores every single stage of your posts. Anytime you hit the save button while creating or editing a post, we will save the stage of your work in local data table. The timestamp is secure within the Bitcoin network and verifiable to anyone who is in possession of a coyp of the data.</p><br>
+    <p> <b>What content is saved?</b>
+    <p class="description">We save the post title, the post body as plain text where all layout tags. Line breaks are converted to spaces.</p>
+    <p> <b>What content is timestamped?</b>
+    <p class="description">We save the post title, the post body as plain text. To hash the post we concatenate the post title and the post body with a space in between. The sha256 of the generated string is being sent to originStamp to be timestamped.</p>
+    <p> <b>How to verify a timestamp?</b>';
+    <p class="description">In order to verify the timestamp you would have to download the data, copy the string that is stored in the text file and then use any sha256 calculator of your choice to hash the string. After that go to OriginStamp and search for the hash. There you will also find further instructions and features.</p>
+    <p><b>Where do I get more Information?</b></p>
+    <p>Please visit <a target="_blank" href="https://app.originstamp.org/faq">OriginStamp FAQ.</a></p>
+    <p><b>You still got questions?</b></p>
+    <p>Fee free to contact us, our emails are provide in the develpoer information on the bottom of this page.</p>
+    <?php
 }
 
 function get_db_status()
@@ -341,33 +382,6 @@ function get_db_status()
         echo '<p style="color: rgb(255, 152, 0)">ERROR: Data table does not exist!</p>';
     }
     echo '<p class="description">Here you can check status of the database that stores hashed post data.</p>';
-}
-
-function get_options()
-{
-    $options = (array)get_option('originstamp');
-    return $options;
-}
-
-function originstamp_admin_page()
-{
-    ?>
-    <div class="wrap">
-        <h2><?php _e('OriginStamp'); ?></h2>
-        <?php if (!empty($options['invalid_emails']) && $_GET['settings-updated']) : ?>
-            <div class="error">
-                <p><?php  ?></p>
-            </div>
-        <?php endif; ?>
-        <form action="options.php" method="post">
-            <?php settings_fields('originstamp'); ?>
-            <?php do_settings_sections('originstamp'); ?>
-            <p class="submit">
-                <input type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>"/>
-            </p>
-        </form>
-    </div>
-    <?php
 }
 
 function api_key()
