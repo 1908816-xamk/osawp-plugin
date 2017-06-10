@@ -42,3 +42,4 @@ develop-eggs
 lib
 lib64
 __pycache__
+wordpress/
