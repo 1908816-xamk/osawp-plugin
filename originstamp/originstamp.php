@@ -38,26 +38,39 @@ define("ORIGINSTAMP_SETTINGS", serialize(array(
     "email" => ""
 )));
 
-// Add font-awesome styles to Originstamp settings page.
-function originstamp_admin_register_head()
-{
-    // font-awesome repo at cdnjs
-    $url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css';
-    echo "<link rel='stylesheet' type='text/css' href='$url' />\n";
-}
-
 /**
  * register hooks, action and bind the functions
  */
-add_action('admin_head', 'originstamp_admin_register_head');
 register_activation_hook(__FILE__, 'originstamp_create_originstamp_table');
 register_uninstall_hook(__FILE__, 'originstamp_on_uninstall');
 add_action('save_post', 'originstamp_create_fingerprint');
 add_action('admin_menu', 'originstamp_admin_menu');
-add_action('wp_head', 'originstamp_request_fingerprints_for_originstamp_render_api_key');
+add_action('wp_head', 'originstamp_request_fingerprints_for_api_key');
 add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_action_links');
 add_action('init', 'originstamp_download_hash_data');
 add_action('template_redirect', 'originstamp_download_hash_data');
+add_action('admin_enqueue_scripts', 'originstamp_load_font_awesome_icons');
+
+/**
+ * function is loaded to use the fontawesome styles
+ */
+function originstamp_load_font_awesome_icons()
+{
+    // register style
+    wp_register_style('originstamp_wp_admin_css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css', false, '1.0.0');
+    // set
+    wp_enqueue_style('originstamp_wp_admin_css');
+}
+
+// Add font-awesome styles to Originstamp settings page.
+function originstamp_admin_register_head()
+{
+    // TODO
+    admin_print_st
+    // font-awesome repo at cdnjs
+    $url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css';
+    echo "<link rel='stylesheet' type='text/css' href='$url' />\n";
+}
 
 /**
  * creates the originstamp table for the hash information
