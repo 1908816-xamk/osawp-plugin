@@ -96,6 +96,7 @@ function originstamp_create_originstamp_table()
         return;
     }
 }
+
 /**
  * is called if the plugin is removed from the wordpress plugin page
  */
@@ -462,10 +463,11 @@ function originstamp_render_api_key()
     <?php
 }
 
-/*
-* Sending a mail
-*/
+/**
+ * sends a mail with the content of the post
+ */
 function originstamp_sender_email() {
+
 // Optional:
 $options = originstamp_get_settings_options();
 ?>
@@ -519,7 +521,7 @@ $options = originstamp_get_settings_options();
         echo '</table>';
     }
 
-    function originstamp_request_fingerprints_for_originstamp_render_api_key()
+    function originstamp_request_fingerprints_for_api_key()
     {
         // Maximum number of pages the API will return.
         $limit = 25;
