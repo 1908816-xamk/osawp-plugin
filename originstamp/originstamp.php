@@ -62,16 +62,6 @@ function originstamp_load_font_awesome_icons()
     wp_enqueue_style('originstamp_wp_admin_css');
 }
 
-// Add font-awesome styles to Originstamp settings page.
-function originstamp_admin_register_head()
-{
-    // TODO
-    admin_print_st
-    // font-awesome repo at cdnjs
-    $url = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css';
-    echo "<link rel='stylesheet' type='text/css' href='$url' />\n";
-}
-
 /**
  * creates the originstamp table for the hash information
  */
