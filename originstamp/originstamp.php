@@ -28,44 +28,47 @@
  * THE SOFTWARE.
  */
 
-defined('ABSPATH') OR exit;
+// Function and class prefix: os_ca1ee1698
 
-define('originstamp_for_wordpress', plugins_url(__FILE__));
+class os_ca1ee1698_OriginStamp{
 
-// Define api key and email to save for future uses.
-define("ORIGINSTAMP_SETTINGS", serialize(array(
-    "api_key" => "",
-    "email" => ""
-)));
-
-/**
- * register hooks, action and bind the functions
- */
-register_activation_hook(__FILE__, 'originstamp_create_originstamp_table');
-register_uninstall_hook(__FILE__, 'originstamp_on_uninstall');
-add_action('save_post', 'originstamp_create_fingerprint');
-add_action('admin_menu', 'originstamp_admin_menu');
-add_action('wp_head', 'originstamp_request_fingerprints_for_api_key');
-add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_action_links');
-add_action('init', 'originstamp_download_hash_data');
-add_action('template_redirect', 'originstamp_download_hash_data');
-add_action('admin_enqueue_scripts', 'originstamp_load_font_awesome_icons');
-
-/**
- * function is loaded to use the fontawesome styles
- */
-function originstamp_load_font_awesome_icons()
+function __construct()
 {
+    defined('ABSPATH') OR exit;
+
+    define('os_ca1ee1698', plugins_url(__FILE__));
+
+    // Define api key and email to save for future uses.
+    define("os_ca1ee1698_ORIGINSTAMP_SETTINGS", serialize(array(
+        "api_key" => "",
+        "email" => ""
+    )));
+    add_action('admin_head', array($this, 'admin_register_head'));
+
+    register_activation_hook(__FILE__, 'create_hash_data_table');
+
+    register_uninstall_hook(__FILE__, 'on_uninstall');
+
+    add_action('save_post', array($this, 'create_originstamp'));
+    add_action('admin_menu', array($this, 'originstamp_admin_menu'));
+    add_action('wp_head', array($this, 'hashes_for_api_key'));
+    add_action('init', array($this, 'download_hash_data'));
+    add_action('template_redirect', array($this, 'download_hash_data'));
+
+    add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'originstamp_action_links');
+}
+
+// Add font-awesome styles to Originstamp settings page.
+function admin_register_head()
+{
+    // font-awesome repo at cdnjs
     // register style
     wp_register_style('originstamp_wp_admin_css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css', false, '1.0.0');
     // set
     wp_enqueue_style('originstamp_wp_admin_css');
 }
 
-/**
- * creates the originstamp table for the hash information
- */
-function originstamp_create_originstamp_table()
+function create_hash_data_table()
 {
     // Create data table for local storage at activation.
     if (!current_user_can('activate_plugins'))
@@ -74,18 +77,16 @@ function originstamp_create_originstamp_table()
     global $wpdb;
 
     $charset_collate = $wpdb->get_charset_collate();
-    // adding the database name
-    add_option("db_table_name", 'originstamp_hash_data');
-
+    add_option("db_table_name", 'os_ca1ee1698_hash_data');
     $table_name = $wpdb->prefix . get_option('db_table_name');
 
     $sql = "CREATE TABLE $table_name (
-		sha256 varchar(64) UNIQUE NOT NULL,
-		time datetime DEFAULT CURRENT_TIMESTAMP,
-        post_title tinytext NOT NULL,
-        post_content longtext NOT NULL,
-		PRIMARY KEY (sha256)
-	) $charset_collate;";
+            sha256 varchar(64) UNIQUE NOT NULL,
+            time datetime DEFAULT CURRENT_TIMESTAMP,
+            post_title tinytext NOT NULL,
+            post_content longtext NOT NULL,
+            PRIMARY KEY (sha256)
+        ) $charset_collate;";
 
     if (is_admin())
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -100,10 +101,7 @@ function originstamp_create_originstamp_table()
     }
 }
 
-/**
- * is called if the plugin is removed from the wordpress plugin page
- */
-function originstamp_on_uninstall()
+function on_uninstall()
 {
     // Remove local data talbe with all content.
     if (!current_user_can('install_plugins'))
@@ -121,45 +119,33 @@ function originstamp_on_uninstall()
     delete_option('originstamp');
 }
 
-/**
- * registers the originstamp admin menu
- */
 function originstamp_admin_menu()
 {
     register_setting('originstamp', 'originstamp');
 
-    add_settings_section('originstamp', __('Settings'), 'originstamp_settings_section', 'originstamp');
-    add_settings_field('originstamp_description', __('description'), 'originstamp_render_description', 'originstamp', 'originstamp');
-    add_settings_field('originstamp_originstamp_render_api_key', __('API Key'), 'originstamp_render_api_key', 'originstamp', 'originstamp');
-    add_settings_field('originstamp_originstamp_sender_email', __('Sender Email'), 'originstamp_sender_email', 'originstamp', 'originstamp');
-    add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'originstamp', 'originstamp_admin_page');
-    add_settings_field('originstamp_db_status', __('DB status'), 'originstamp_get_db_status', 'originstamp', 'originstamp');
-    add_settings_field('oroginstamp_hash_table', __('Hash table'), 'originstamp_request_fingerprints_for_originstamp_render_api_key', 'originstamp', 'originstamp');
-    add_settings_field('originstamp_dev', __('Developers'), 'originstamp_dev_info', 'originstamp', 'originstamp');
+    add_settings_section('originstamp', __('Settings'), array($this, 'settings_section'), 'originstamp');
+    add_settings_field('originstamp_description', __('Description'), array($this, 'description'), 'originstamp', 'originstamp');
+    add_settings_field('originstamp_api_key', __('API Key'), array($this, 'api_key'), 'originstamp', 'originstamp');
+    add_settings_field('originstamp_sender_email', __('Sender Email'), array($this, 'sender_email'), 'originstamp', 'originstamp');
+    add_settings_field('originstamp_db_status', __('DB status'), array($this, 'get_db_status'), 'originstamp', 'originstamp');
+    add_settings_field('oroginstamp_hash_table', __('Hash table'), array($this, 'hashes_for_api_key'), 'originstamp', 'originstamp');
+    add_settings_field('originstamp_dev', __('Developers'), array($this, 'dev_info'), 'originstamp', 'originstamp');
+
+    add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'originstamp', array($this, 'originstamp_admin_page'));
 }
 
-/**
- * adds the acction links
- * @param $links
- * @return mixed
- */
 function originstamp_action_links($links)
 {
     array_unshift($links, '<a href="' . admin_url('options-general.php?page=originstamp') . '">Settings</a>');
     return $links;
 }
 
-/**
- * dummy functions / do nothing
- */
-function originstamp_settings_section()
+function settings_section()
 {
-    // do nothing
     ;
 }
 
-
-function originstamp_get_settings_options()
+function get_options()
 {
     $options = (array)get_option('originstamp');
     return $options;
@@ -186,15 +172,12 @@ function originstamp_admin_page()
     <?php
 }
 
-/**
- * downloading the original texts which are hashed
- */
-function originstamp_download_hash_data()
+function download_hash_data()
 {
     // Download a data set from plugin data table.
     if (isset($_GET['d'])) {
         $hash_string = $_GET['d'];
-        $data = originstamp_get_local_hash($hash_string);
+        $data = $this->retrieve_hash_from_table($hash_string);
         if (!$data)
             exit('Hash string not found in database.');
         header("Content-type: application/x-msdownload", true, 200);
@@ -206,13 +189,7 @@ function originstamp_download_hash_data()
     }
 }
 
-/**
- * adds a new hash to the database
- * @param $hash_string
- * @param $post_title
- * @param $post_content
- */
-function originstamp_add_hash($hash_string, $post_title, $post_content)
+function insert_hash_in_table($hash_string, $post_title, $post_content)
 {
     global $wpdb;
 
@@ -222,12 +199,7 @@ function originstamp_add_hash($hash_string, $post_title, $post_content)
         array());
 }
 
-/**
- * reads the original text for a certain hash from the wordpress database
- * @param $hash_string
- * @return string
- */
-function originstamp_get_local_hash($hash_string)
+function retrieve_hash_from_table($hash_string)
 {
     global $wpdb;
     $table_name = $wpdb->prefix . get_option('db_table_name');
@@ -238,11 +210,7 @@ function originstamp_get_local_hash($hash_string)
     return $data;
 }
 
-/**
- * extracts the fulltext from a specified post id, concats the text and calculates the SHA256
- * @param $post_id
- */
-function originstamp_create_fingerprint($post_id)
+function create_originstamp($post_id)
 {
     // Create a SHA256 value from WP post or edit.
     if (wp_is_post_revision($post_id))
@@ -260,22 +228,16 @@ function originstamp_create_fingerprint($post_id)
     $hash_string = hash('sha256', $data);
     $body['hash_string'] = $hash_string;
 
-    originstamp_add_hash($hash_string, $title, $content);
+    $this->insert_hash_in_table($hash_string, $title, $content);
 
-    originstamp_submit_hash($body, $hash_string);
-    originstamp_send_confirm_email($data, $hash_string);
+    $this->send_to_originstamp_api($body, $hash_string);
+    $this->send_confirm_email($data, $hash_string);
 }
 
-/**
- * submits the hash to originstamp
- * @param $body
- * @param $hashString
- * @return mixed
- */
-function originstamp_submit_hash($body, $hashString)
+function send_to_originstamp_api($body, $hashString)
 {
     // Send computed hash value to OriginStamp.
-    $options = originstamp_get_settings_options();
+    $options = $this->get_options();
     $body['email'] = $options['email'];
 
     $response = wp_remote_post('https://api.originstamp.org/api/' . $hashString, array(
@@ -286,7 +248,7 @@ function originstamp_submit_hash($body, $hashString)
         'blocking' => true,
         'headers' => array(
             'content-type' => "application/json",
-            'Authorization' => $options['originstamp_render_api_key']
+            'Authorization' => $options['api_key']
         ),
         'body' => json_encode($body),
         'cookies' => array()
@@ -304,14 +266,14 @@ function originstamp_submit_hash($body, $hashString)
     return $response;
 }
 
-function originstamp_send_confirm_email($data, $hash_string)
+function send_confirm_email($data, $hash_string)
 {
     // Send confirmation Email to user.
     // I no Email address provided, nothing will be sent.
     $instructions = "Please store this Email. You need to hash following value with a SHA256:\n\n";
     $header = "================ START TEXT =================\n";
     $footer = "\n================ END TEXT ===================";
-    $options = originstamp_get_settings_options();
+    $options = $this->get_options();
     if (!$options['email']) {
         return '';
     }
@@ -327,13 +289,7 @@ function originstamp_send_confirm_email($data, $hash_string)
     return $response;
 }
 
-/**
- * requests the table of timestamps (pagination) for the api key
- * @param $offset
- * @param $records
- * @return array
- */
-function originstamp_request_hash_table($offset, $records)
+function get_hashes_for_api_key($offset, $records)
 {
     // Get hash table for API key.
     /*POST fields for table request.
@@ -341,13 +297,13 @@ function originstamp_request_hash_table($offset, $records)
      hash_string
      comment
      date_created
-     originstamp_render_api_key
+     api_key
      offset
      records*/
-    $options = originstamp_get_settings_options();
-    $body['originstamp_render_api_key'] = $options['originstamp_render_api_key'];
+    $options = $this->get_options();
+    $body['api_key'] = $options['api_key'];
 
-    if ($body['originstamp_render_api_key'] == '')
+    if ($body['api_key'] == '')
         return array();
 
     // Start offset
@@ -363,7 +319,7 @@ function originstamp_request_hash_table($offset, $records)
         'blocking' => true,
         'headers' => array(
             'content-type' => "application/json",
-            'Authorization' => $options['originstamp_render_api_key']
+            'Authorization' => $options['api_key']
         ),
         'body' => json_encode($body),
         'cookies' => array()
@@ -373,15 +329,12 @@ function originstamp_request_hash_table($offset, $records)
     return $response;
 }
 
-/*
-* The function renders the developers information for the support
-*/
-function originstamp_dev_info()
+function dev_info()
 {
     ?>
     Visit us on <a href="https://app.originstamp.org/home">https://app.originstamp.org/home</a><br><br>
     Or contact us:<br>
-    <table id="originstamp_dev_info" style="display: inline-table;">
+    <table id="dev_info" style="display: inline-table;">
         <tr>
             <td>
                 Thomas Hepp
@@ -410,10 +363,7 @@ function originstamp_dev_info()
     <?php
 }
 
-/*
-* The function adds the FAQ about the plugin to the admin panel
-*/
-function originstamp_render_description()
+function description()
 {
     ?>
     <p> This plugin saves and stores every single stage of your posts. Anytime you hit the save button while creating or
@@ -437,10 +387,7 @@ function originstamp_render_description()
     <?php
 }
 
-/*
-* The method checks the database status from the wordpress plugin and creates an alert if the database does not exists
-*/
-function originstamp_get_db_status()
+function get_db_status()
 {
     global $wpdb;
     $table_name = $wpdb->prefix . get_option('db_table_name');
@@ -452,13 +399,12 @@ function originstamp_get_db_status()
     echo '<p class="description">Here you can check status of the database that stores hashed post data.</p>';
 }
 
-function originstamp_render_api_key()
+function api_key()
 {
     // Read in API key.
-    $options = originstamp_get_settings_options();
+    $options = $this->get_options();
     ?>
-    <input title="API key" type="text" name="originstamp[originstamp_render_api_key]" size="40"
-           value="<?php echo $options['originstamp_render_api_key'] ?>"/>
+    <input title="API key" type="text" name="originstamp[api_key]" size="40" value="<?php echo $options['api_key'] ?>"/>
     <p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
         <a href="https://originstamp.org/dev">
             <i class="fa fa-sign-in" aria-hidden="true"></i>
@@ -466,20 +412,17 @@ function originstamp_render_api_key()
     <?php
 }
 
-/**
- * sends a mail with the content of the post
- */
-function originstamp_sender_email() {
-
+function sender_email()
+{
 // Optional:
-$options = originstamp_get_settings_options();
+$options = $this->get_options();
 ?>
 <input title="Email" type="text" name="originstamp[email]" size="40" value="<?php echo $options['email'] ?>"/>
 <p class="description"><?php _e('Please provide an Email address so that we can send your data. You need to store your data to be able to verify it.') ?>
     <?php
     }
 
-    function originstamp_parse_table($response_json_body)
+    function parse_table($response_json_body)
     {
         echo '<table style="display: inline-table;">';
         echo '<tr><th>Date created</th><th>Hash string (SHA256)</th><th>Status</th><th>Data</th></tr>';
@@ -488,7 +431,7 @@ $options = originstamp_get_settings_options();
             $date_created = $hash->date_created / 1000;
             $submit_status = $hash->submit_status->multi_seed;
             $hash_string = $hash->hash_string;
-            $db_res = originstamp_get_local_hash($hash_string);
+            // $db_res = $this->retrieve_hash_from_table($hash_string);
             echo '<tr>';
             echo '<td>' . gmdate("Y-m-d H:i:s", $date_created) . '</td>';
 
@@ -524,13 +467,13 @@ $options = originstamp_get_settings_options();
         echo '</table>';
     }
 
-    function originstamp_request_fingerprints_for_api_key()
+    function hashes_for_api_key()
     {
         // Maximum number of pages the API will return.
         $limit = 25;
 
         // Get first record, to determine, how many records there are overall.
-        $get_page_info = originstamp_request_hash_table(0, 1);
+        $get_page_info = $this->get_hashes_for_api_key(0, 1);
         if (!$get_page_info)
             return;
 
@@ -575,13 +518,15 @@ $options = originstamp_get_settings_options();
         echo '<div id="paging"><p>', $prevlink, ' Page ', $page, ' of ', $num_of_pages, ' pages, displaying ', $start, '-', $end, ' of ', $total, ' results ', $nextlink, ' </p></div>';
 
         // Get data from API.
-        $response = originstamp_request_hash_table($offset, $limit);
+        $response = $this->get_hashes_for_api_key($offset, $limit);
         $response_json_body = json_decode($response['body']);
 
         // Parse response.
-        originstamp_parse_table($response_json_body);
+        $this->parse_table($response_json_body);
 
         return;
     }
+    }
 
+    $os_ca1ee1698 = new os_ca1ee1698_OriginStamp();
     ?>
