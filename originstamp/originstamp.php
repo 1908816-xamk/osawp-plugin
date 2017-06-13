@@ -2,7 +2,7 @@
 defined('ABSPATH') OR exit;
 /*
  * Plugin Name: OriginStamp for Wordpress
- * Plugin URI: http://www.ca1ee1698_originstamp.org
+ * Plugin URI: http://www.originstamp.org
  * description: Creates a tamper-proof timestamp of your content each time it is modified. The timestamp is created with the Bitcoin blockchain.
  * Version: 0.0.5
  * Author: Thomas Hepp, André Gernandt, Eugen Stroh
@@ -334,7 +334,7 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
         public function dev_info()
         {
             ?>
-            Visit us on <a href="https://app.originstamp.org/home">originstamp.org</a><br><br>
+            Visit us on OriginStamp: <a target="_blank" href="https://app.originstamp.org/home"><i class="fa fa-sign-in" aria-hidden="true"></i></a><br><br>
             Or contact us:<br>
             <table id="dev_info" style="display: inline-table;">
                 <tr>
@@ -383,7 +383,9 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
                 stored in the text file and then use any sha256 calculator of your choice to hash the string. After that go to
                 OriginStamp and search for the hash. There you will also find further instructions and features.</p>
             <p><b>Where do I get more Information?</b></p>
-            <p>Please visit <a target="_blank" href="https://app.ca1ee1698_originstamp.org/faq">OriginStamp FAQ.</a></p>
+            <p>Please visit our OriginStamp FAQ: <a target="_blank" href="https://originstamp.org/faq">
+                    <i class="fa fa-sign-in" aria-hidden="true"></i>
+                </a></p>
             <p><b>You still got questions?</b></p>
             <p>Fee free to contact us, our emails are provide in the develpoer information on the bottom of this page.</p>
             <?php
@@ -409,7 +411,7 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
             ?>
                 <input title="API key" type="text" name="ca1ee1698_originstamp[api_key]" size="40" value="<?php echo $options['api_key'] ?>"/>
                 <p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
-                    <a href="https://ca1ee1698_originstamp.org/dev">
+                    <a target="_blank" href="https://originstamp.org/dev">
                         <i class="fa fa-sign-in" aria-hidden="true"></i>
                     </a></p>
                 <input title="DB table name" type="hidden" name="ca1ee1698_originstamp[db_table_name]" value="<?php echo $options['db_table_name'] ?>"/>
@@ -447,7 +449,7 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
                 echo '<td>' . gmdate("Y-m-d H:i:s", $date_created) . '</td>';
 
                 echo '<td>';
-                echo '<a href="https://ca1ee1698_originstamp.org/s/'
+                echo '<a href="https://originstamp.org/s/'
                     . $hash_string
                     . '"'
                     . ' target="_blank"'
