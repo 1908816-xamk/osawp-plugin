@@ -176,6 +176,8 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
             // Download a data set from plugin data table.
             if (isset($_GET['d'])) {
                 $hash_string = $_GET['d'];
+                if (!ctype_xdigit($hash_string))
+                    exit('Hash string invalid');
                 $data = $this->retrieve_hash_from_table($hash_string);
                 if (!$data)
                     exit('Hash string not found in database.');
