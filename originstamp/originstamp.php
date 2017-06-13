@@ -2,7 +2,7 @@
 defined('ABSPATH') OR exit;
 /*
  * Plugin Name: OriginStamp for Wordpress
- * Plugin URI: http://www.originstamp.org
+ * Plugin URI: http://www.ca1ee1698_originstamp.org
  * description: Creates a tamper-proof timestamp of your content each time it is modified. The timestamp is created with the Bitcoin blockchain.
  * Version: 0.0.5
  * Author: Thomas Hepp, André Gernandt, Eugen Stroh
@@ -27,13 +27,13 @@ defined('ABSPATH') OR exit;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-register_activation_hook(__FILE__, array('OriginStampPLForWP', 'on_activation'));
-register_uninstall_hook(__FILE__, array('OriginStampPLForWP', 'on_uninstall'));
+register_activation_hook(__FILE__, array('ca1ee1698OriginStampPLForWP', 'on_activation'));
+register_uninstall_hook(__FILE__, array('ca1ee1698OriginStampPLForWP', 'on_uninstall'));
 
-if (!class_exists('OriginStampPLForWP')) :
+if (!class_exists('ca1ee1698OriginStampPLForWP')) :
 
-    add_action('plugins_loaded', array('OriginStampPLForWP', 'init'));
-    class OriginStampPLForWP{
+    add_action('plugins_loaded', array('ca1ee1698OriginStampPLForWP', 'init'));
+    class ca1ee1698OriginStampPLForWP{
 
         protected static $instance;
 
@@ -45,13 +45,13 @@ if (!class_exists('OriginStampPLForWP')) :
 
         public function __construct()
         {
-            define('originstamp_for_wordpress', plugins_url(__FILE__));
+            define('ca1ee1698_originstamp', plugins_url(__FILE__));
 
             add_action('admin_head', array($this, 'admin_register_head'));
             add_action('save_post', array($this, 'create_originstamp'));
             add_action('admin_menu', array($this, 'originstamp_admin_menu'));
             add_action('wp_head', array($this, 'hashes_for_api_key'));
-            //add_action('init', array($this, 'download_hash_data'));
+            add_action('init', array($this, 'download_hash_data'));
             add_action('template_redirect', array($this, 'download_hash_data'));
 
             add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'originstamp_action_links'));
@@ -76,9 +76,10 @@ if (!class_exists('OriginStampPLForWP')) :
             global $wpdb;
 
             $charset_collate = $wpdb->get_charset_collate();
-            $options = OriginStampPLForWP::get_options();
-            add_option("ca1ee1698_db_table_name", 'ca1ee1698_hash_data');
-            $table_name = $wpdb->prefix . get_option('ca1ee1698_db_table_name');
+            $options = self::get_options();
+            $options['db_table_name'] = 'ca1ee1698_hash_data';
+            update_option('ca1ee1698_originstamp', $options);
+            $table_name = $wpdb->prefix . $options['db_table_name'];
 
             $sql = "CREATE TABLE $table_name (
                         sha256 varchar(64) UNIQUE NOT NULL,
@@ -107,38 +108,39 @@ if (!class_exists('OriginStampPLForWP')) :
                 return;
 
             global $wpdb;
-
-            $table_name = $wpdb->prefix . get_option('ca1ee1698_db_table_name');
-            $sql = 'DROP TABLE IF EXISTS ' . $table_name;
+            $options = self::get_options();
+            $table_name = $wpdb->prefix . $options['db_table_name'];
+            $sql = $wpdb->prepare('DROP TABLE IF EXISTS ' . $table_name, $table_name);
             $wpdb->query($sql);
 
-            delete_option('originstamp');
-            delete_site_option('originstamp');
+            delete_option('ca1ee1698_originstamp');
+            delete_site_option('ca1ee1698_originstamp');
         }
 
         public function originstamp_admin_menu()
         {
-            register_setting('originstamp', 'originstamp');
+            register_setting('ca1ee1698_originstamp', 'ca1ee1698_originstamp');
 
-            add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'originstamp', array($this, 'originstamp_admin_page'));
+            add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'ca1ee1698_originstamp', array($this, 'originstamp_admin_page'));
 
-            add_settings_section('originstamp', __('Settings'), array($this, 'settings_section'), 'originstamp');
-            add_settings_field('originstamp_description', __('Description'), array($this, 'description'), 'originstamp', 'originstamp');
-            add_settings_field('originstamp_api_key', __('API Key'), array($this, 'api_key'), 'originstamp', 'originstamp');
-            add_settings_field('originstamp_sender_email', __('Sender Email'), array($this, 'sender_email'), 'originstamp', 'originstamp');
-            add_settings_field('originstamp_db_status', __('DB status'), array($this, 'get_db_status'), 'originstamp', 'originstamp');
-            add_settings_field('oroginstamp_hash_table', __('Hash table'), array($this, 'hashes_for_api_key'), 'originstamp', 'originstamp');
-            add_settings_field('originstamp_dev', __('Developers'), array($this, 'dev_info'), 'originstamp', 'originstamp');
+            add_settings_section('ca1ee1698_originstamp', __('Settings'), array($this, 'settings_section'), 'ca1ee1698_originstamp');
+            add_settings_field('originstamp_description', __('Description'), array($this, 'description'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
+            add_settings_field('originstamp_api_key', __('API Key'), array($this, 'api_key'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
+            add_settings_field('originstamp_sender_email', __('Sender Email'), array($this, 'sender_email'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
+            add_settings_field('originstamp_db_status', __('DB status'), array($this, 'check_db_status'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
+            add_settings_field('oroginstamp_hash_table', __('Hash table'), array($this, 'hashes_for_api_key'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
+            add_settings_field('originstamp_dev', __('Developers'), array($this, 'dev_info'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
         }
 
         public function originstamp_action_links($links)
         {
-            array_unshift($links, '<a href="' . admin_url('options-general.php?page=originstamp') . '">Settings</a>');
+            array_unshift($links, '<a href="' . admin_url('options-general.php?page=ca1ee1698_originstamp') . '">Settings</a>');
             return $links;
         }
 
         public function settings_section()
         {
+            // do nothing
             ;
         }
 
@@ -159,8 +161,8 @@ if (!class_exists('OriginStampPLForWP')) :
                     </div>
                 <?php endif; ?>
                 <form action="options.php" method="post">
-                    <?php settings_fields('originstamp'); ?>
-                    <?php do_settings_sections('originstamp'); ?>
+                    <?php settings_fields('ca1ee1698_originstamp'); ?>
+                    <?php do_settings_sections('ca1ee1698_originstamp'); ?>
                     <p class="submit">
                         <input type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>"/>
                     </p>
@@ -189,8 +191,8 @@ if (!class_exists('OriginStampPLForWP')) :
         private function insert_hash_in_table($hash_string, $post_title, $post_content)
         {
             global $wpdb;
-
-            $table_name = $wpdb->prefix . get_option('ca1ee1698_db_table_name');
+            $options = self::get_options();
+            $table_name = $wpdb->prefix . $options['db_table_name'];
             $wpdb->insert($table_name,
                 array('sha256' => $hash_string, 'post_title' => $post_title, 'post_content' => $post_content),
                 array());
@@ -199,9 +201,10 @@ if (!class_exists('OriginStampPLForWP')) :
         private function retrieve_hash_from_table($hash_string)
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . get_option('ca1ee1698_db_table_name');
+            $options = self::get_options();
+            $table_name = $wpdb->prefix . $options['db_table_name'];
             $sql = "SELECT * FROM $table_name WHERE sha256 = \"$hash_string\"";
-            $result = $wpdb->get_row($sql);
+            $result = $wpdb->get_row($wpdb->prepare($sql, $hash_string));
             $data = $result->post_title . $result->post_content;
 
             return $data;
@@ -234,7 +237,7 @@ if (!class_exists('OriginStampPLForWP')) :
         private function send_to_originstamp_api($body, $hashString)
         {
             // Send computed hash value to OriginStamp.
-            $options = $this->get_options();
+            $options = self::get_options();
             $body['email'] = $options['email'];
 
             $response = wp_remote_post('https://api.originstamp.org/api/' . $hashString, array(
@@ -270,7 +273,7 @@ if (!class_exists('OriginStampPLForWP')) :
             $instructions = "Please store this Email. You need to hash following value with a SHA256:\n\n";
             $header = "================ START TEXT =================\n";
             $footer = "\n================ END TEXT ===================";
-            $options = $this->get_options();
+            $options = self::get_options();
             if (!$options['email']) {
                 return '';
             }
@@ -297,7 +300,7 @@ if (!class_exists('OriginStampPLForWP')) :
              api_key
              offset
              records*/
-            $options = $this->get_options();
+            $options = self::get_options();
             $body['api_key'] = $options['api_key'];
 
             if ($body['api_key'] == '')
@@ -329,7 +332,7 @@ if (!class_exists('OriginStampPLForWP')) :
         public function dev_info()
         {
             ?>
-            Visit us on <a href="https://app.originstamp.org/home">https://app.originstamp.org/home</a><br><br>
+            Visit us on <a href="https://app.originstamp.org/home">originstamp.org</a><br><br>
             Or contact us:<br>
             <table id="dev_info" style="display: inline-table;">
                 <tr>
@@ -378,20 +381,21 @@ if (!class_exists('OriginStampPLForWP')) :
                 stored in the text file and then use any sha256 calculator of your choice to hash the string. After that go to
                 OriginStamp and search for the hash. There you will also find further instructions and features.</p>
             <p><b>Where do I get more Information?</b></p>
-            <p>Please visit <a target="_blank" href="https://app.originstamp.org/faq">OriginStamp FAQ.</a></p>
+            <p>Please visit <a target="_blank" href="https://app.ca1ee1698_originstamp.org/faq">OriginStamp FAQ.</a></p>
             <p><b>You still got questions?</b></p>
             <p>Fee free to contact us, our emails are provide in the develpoer information on the bottom of this page.</p>
             <?php
         }
 
-        public function get_db_status()
+        public function check_db_status()
         {
             global $wpdb;
-            $table_name = $wpdb->prefix . get_option('ca1ee1698_db_table_name');
-            if ($wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name) {
-                echo '<p style="color: rgb(0, 150, 136)">Database table created: "' . $table_name . '".</p>';
+            $options = self::get_options();
+            $table_name = $wpdb->prefix . $options['db_table_name'];
+            if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE '$table_name'", $table_name)) == $table_name) {
+                echo '<p style="color: rgb(0, 150, 136)">Database table created: ' . $table_name . ' . </p>';
             } else {
-                echo '<p style="color: rgb(255, 152, 0)">ERROR: Data table does not exist!</p>';
+                echo '<p style="color: rgb(255, 152, 0)">ERROR: Data table does not exist: ' . $table_name . '</p>';
             }
             echo '<p class="description">Here you can check status of the database that stores hashed post data.</p>';
         }
@@ -399,27 +403,36 @@ if (!class_exists('OriginStampPLForWP')) :
         public function api_key()
         {
             // Read in API key.
-            $options = $this->get_options();
+            $options = self::get_options();
             ?>
-            <input title="API key" type="text" name="originstamp[api_key]" size="40" value="<?php echo $options['api_key'] ?>"/>
-            <p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
-                <a href="https://originstamp.org/dev">
-                    <i class="fa fa-sign-in" aria-hidden="true"></i>
-                </a></p>
+                <input title="API key" type="text" name="ca1ee1698_originstamp[api_key]" size="40" value="<?php echo $options['api_key'] ?>"/>
+                <p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
+                    <a href="https://ca1ee1698_originstamp.org/dev">
+                        <i class="fa fa-sign-in" aria-hidden="true"></i>
+                    </a></p>
+                <input title="DB table name" type="hidden" name="ca1ee1698_originstamp[db_table_name]" value="<?php echo $options['db_table_name'] ?>"/>
             <?php
         }
 
         public function sender_email()
         {
-            // Optional:
-            $options = $this->get_options();
+            // Email address:
+            $options = self::get_options();
             ?>
-            <input title="Email" type="text" name="originstamp[email]" size="40" value="<?php echo $options['email'] ?>"/>
-            <p class="description"><?php _e('Please provide an Email address so that we can send your data. You need to store your data to be able to verify it.') ?>
+                <input title="Email" type="text" name="ca1ee1698_originstamp[email]" size="40" value="<?php echo $options['email'] ?>"/>
+                <p class="description"><?php _e('Please provide an Email address so that we can send your data. You need to store your data to be able to verify it.') ?>
                 <?php
         }
 
-        function parse_table($response_json_body)
+        public function db_table_name()
+        {
+            $options = self::get_options();
+            ?>
+                <input type="hidden" name="ca1ee1698_originstamp[db_table_name]" value="<?php echo $options['db_table_name'] ?>"/>
+            <?php
+        }
+
+        private function parse_table($response_json_body)
         {
             echo '<table style="display: inline-table;">';
             echo '<tr><th>Date created</th><th>Hash string (SHA256)</th><th>Status</th><th>Data</th></tr>';
@@ -428,12 +441,11 @@ if (!class_exists('OriginStampPLForWP')) :
                 $date_created = $hash->date_created / 1000;
                 $submit_status = $hash->submit_status->multi_seed;
                 $hash_string = $hash->hash_string;
-                // $db_res = $this->retrieve_hash_from_table($hash_string);
                 echo '<tr>';
                 echo '<td>' . gmdate("Y-m-d H:i:s", $date_created) . '</td>';
 
                 echo '<td>';
-                echo '<a href="https://originstamp.org/s/'
+                echo '<a href="https://ca1ee1698_originstamp.org/s/'
                     . $hash_string
                     . '"'
                     . ' target="_blank"'
@@ -457,7 +469,7 @@ if (!class_exists('OriginStampPLForWP')) :
                 }
                 echo '</td>';
                 echo '<td>';
-                echo "<a href=\"?page=originstamp&d=$hash_string\" title=\"download\" target=\"_blank\">download</a>";
+                echo "<a href=\"?page=ca1ee1698_originstamp&d=$hash_string\" title=\"download\" target=\"_blank\">download</a>";
                 echo '</td>';
                 echo '</tr>';
             }
@@ -505,10 +517,10 @@ if (!class_exists('OriginStampPLForWP')) :
                 $end = min(($offset + $limit), $total);
 
                 // The "back" link
-                $prevlink = ($page > 1) ? '<a href="?page=originstamp&p=1" title="First page">&laquo;</a> <a href="?page=originstamp' . '&p=' . ($page - 1) . '" title="Previous page">&lsaquo;</a>' : '<span class="disabled">&laquo;</span> <span class="disabled">&lsaquo;</span>';
+                $prevlink = ($page > 1) ? '<a href="?page=ca1ee1698_originstamp&p=1" title="First page">&laquo;</a> <a href="?page=ca1ee1698_originstamp' . '&p=' . ($page - 1) . '" title="Previous page">&lsaquo;</a>' : '<span class="disabled">&laquo;</span> <span class="disabled">&lsaquo;</span>';
 
                 // The "forward" link
-                $nextlink = ($page < $num_of_pages) ? '<a href="?page=originstamp' . '&p=' . ($page + 1) . '" title="Next page">&rsaquo;</a> <a href="?page=originstamp' . '&p=' . $num_of_pages . '" title="Last page">&raquo;</a>' : '<span class="disabled">&rsaquo;</span> <span class="disabled">&raquo;</span>';
+                $nextlink = ($page < $num_of_pages) ? '<a href="?page=ca1ee1698_originstamp' . '&p=' . ($page + 1) . '" title="Next page">&rsaquo;</a> <a href="?page=ca1ee1698_originstamp' . '&p=' . $num_of_pages . '" title="Last page">&raquo;</a>' : '<span class="disabled">&rsaquo;</span> <span class="disabled">&raquo;</span>';
 
                 // Display the paging information
                 echo '<p class="description">A list of all your hashes submitted with API key above: <br></p>';
