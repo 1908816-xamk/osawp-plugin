@@ -1,14 +1,18 @@
 === OriginStamp ===
+
 Plugin Name: OriginStamp
 Plugin URI: https://developer.wordpress.org/plugins/originstamp
-Contributors: André Gernand, Thomas Hepp, Eugen Stroh
+Contributors: Eugen Stroh, Thomas Hepp, Bela Gipp, André Gernandt
 Tags: time-stamping, verification, bitcoin
 License: MIT
+Requires at least: WordPress 4.7
+Tested up to: WordPress 4.8
+Stable tag: 0.0.6
 
 OriginStamp is an automated time-stamping solution for your WordPress posts using the OriginStamp API service.
 
-== Description ==
 
+== Description ==
 
 OriginStamp is a web-based, trusted timestamping service that uses the decentralized Bitcoin block chain to store anonymous, tamper-proof time stamps for any digital content.
 OriginStamp is free of charge and allows users to prove that they were the originator of certain information at a given point in time.
@@ -53,7 +57,15 @@ The plugin will create a data table in the local WordPress database to store con
 
 If you delete the plugin, the created data table will be removed automatically. So do a backup if you want to keep data stored in it.
 
+
+== Upgrade Notice ==
+
+In order to update the plugin form an earlier version replace the old plugin file.
+
 == Changelog ==
+
+= 0.0.1 =
+* Initial release
 
 = 0.0.2 =
 * Customized for changed OriginStamp API.
@@ -67,3 +79,24 @@ If you delete the plugin, the created data table will be removed automatically. 
 
 = 0.0.5 =
 * DB table implemented to store hashed data.
+
+= 0.0.6 =
+* Stable version for official WordPress Plugin repository
+* Some security issues fixes
+* Some minor fixes
+
+== Screenshots ==
+
+1. OriginStamp settings section screenshot-1.png.
+2. Table with hashes retrieved via OriginStamp API screenshot-2.png.
+3. Start a new blog post screenshot-3.png.
+4. New timestamps are showed in the hash table on settings page screenshot-4.png.
+5. Email with hash and content that was hashed screenshot-5.png.
+6. Download the content that corresponds to a certain screenshot-6.png.
+7. Verify the sha256 value by copy and pasting the content that we have sent you or the file content into any online sha256 calculator screenshot-7.png.
+8. Go to the OriginStamp page an check the status of your timestamp screenshot-8.png.
+
+== Donate ==
+
+If you want to support our project, you can donate any amounts of Bitcoins to: 1Stampap27ZbxugEmWPbxNXJxzmYWn2op
+There is also a possibility to donate via PayPal, check our FAQ section 'Why is it free?' at: https://app.originstamp.org/faq

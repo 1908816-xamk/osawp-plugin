@@ -4,8 +4,8 @@ defined('ABSPATH') OR exit;
  * Plugin Name: OriginStamp for Wordpress
  * Plugin URI: http://www.originstamp.org
  * description: Creates a tamper-proof timestamp of your content each time it is modified. The timestamp is created with the Bitcoin blockchain.
- * Version: 0.0.5
- * Author: Thomas Hepp, André Gernandt, Eugen Stroh
+ * Version: 0.0.6
+ * Author: Eugen Stroh, Thomas Hepp, Bela Gipp, André Gernandt
  * Author URI: https://github.com/thhepp/, https://github.com/ager, https://github.com/eustro
  * License: The MIT License (MIT)
  *
@@ -339,6 +339,14 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
             <table id="dev_info" style="display: inline-table;">
                 <tr>
                     <td>
+                        Eugen Stroh
+                    </td>
+                    <td>
+                        <a target="_top" href="mailto:eugen.stroh@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
                         Thomas Hepp
                     </td>
                     <td>
@@ -347,20 +355,20 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
                 </tr>
                 <tr>
                     <td>
+                        Bela Gipp
+                    </td>
+                    <td>
+                        <a target="_top" href="mailto:bela.gipp@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>
+                    </td>
+                </tr
+                <tr>
+                    <td>
                         André Gernandt
                     </td>
                     <td>
                         <a target="_top" href="mailto:andre.gernandt@gmail.com?Subject=OriginStamp-wp%20plugin">contact</a>
                     </td>
                 </tr
-                <tr>
-                    <td>
-                        Eugen Stroh
-                    </td>
-                    <td>
-                        <a target="_top" href="mailto:eugen.stroh@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>
-                    </td>
-                </tr>
             </table>
             <?php
         }
