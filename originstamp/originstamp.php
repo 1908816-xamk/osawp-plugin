@@ -171,7 +171,7 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
             <?php
         }
 
-        function download_hash_data()
+        public function download_hash_data()
         {
             // Download a data set from plugin data table.
             if (isset($_GET['d'])) {
