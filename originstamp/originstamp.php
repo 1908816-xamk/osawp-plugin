@@ -6,7 +6,7 @@ defined('ABSPATH') OR exit;
  * description: Creates a tamper-proof timestamp of your content each time it is modified. The timestamp is created with the Bitcoin blockchain.
  * Version: 0.0.6
  * Author: Eugen Stroh, Thomas Hepp, Bela Gipp, André Gernandt
- * Author URI: https://github.com/thhepp/, https://github.com/ager, https://github.com/eustro
+ * Author URI: https://github.com/eustro, https://github.com/thhepp/, https://github.com/eustro
  * License: The MIT License (MIT)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
