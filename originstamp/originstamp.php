@@ -50,7 +50,6 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
             add_action('admin_head', array($this, 'admin_register_head'));
             add_action('save_post', array($this, 'create_originstamp'));
             add_action('admin_menu', array($this, 'originstamp_admin_menu'));
-            add_action('wp_head', array($this, 'hashes_for_api_key'));
             add_action('init', array($this, 'download_hash_data'));
             add_action('template_redirect', array($this, 'download_hash_data'));
 
@@ -416,14 +415,24 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
         {
             // Read in API key.
             $options = self::get_options();
-            ?>
-                <input title="API key" type="text" name="ca1ee1698_originstamp[api_key]" size="40" value="<?php echo $options['api_key'] ?>"/>
-                <p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
-                    <a target="_blank" href="https://originstamp.org/dev">
-                        <i class="fa fa-sign-in" aria-hidden="true"></i>
-                    </a></p>
-                <input title="DB table name" type="hidden" name="ca1ee1698_originstamp[db_table_name]" value="<?php echo $options['db_table_name'] ?>"/>
-            <?php
+
+            $valid_uuid = '/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i';
+
+            ?><input title="API key" type="text" name="ca1ee1698_originstamp[api_key]" size="40"
+                     value="<?php echo $options['api_key'] ?>"/><?php
+
+            // Check, if API key is a valid uuid and show error message, if not.
+            if (!preg_match($valid_uuid, $options['api_key']) && !($options['api_key'] == '')) {
+                ?><p class="description" style="color: rgb(255, 152, 0)"><?php _e('Error: API key invalid! Please check, if you copied all sign or if there are any typos.') ?></p><?php
+            }
+            ?><p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
+            <a target="_blank" href="https://originstamp.org/dev">
+                <i class="fa fa-sign-in" aria-hidden="true"></i>
+            </a></p><?php
+
+                ?>
+                    <input title="DB table name" type="hidden" name="ca1ee1698_originstamp[db_table_name]" value="<?php echo $options['db_table_name'] ?>"/>
+                <?php
         }
 
         public function sender_email()
@@ -431,9 +440,16 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
             // Email address:
             $options = self::get_options();
             ?>
-                <input title="Email" type="text" name="ca1ee1698_originstamp[email]" size="40" value="<?php echo $options['email'] ?>"/>
-                <p class="description"><?php _e('Please provide an Email address so that we can send your data. You need to store your data to be able to verify it.') ?>
-                <?php
+            <input title="Email" type="text" name="ca1ee1698_originstamp[email]" size="40" value="<?php echo $options['email'] ?>"/>
+            <?php
+
+            if (!filter_var($options['email'], FILTER_VALIDATE_EMAIL) && !($options['email'] == '')) {
+                ?><p class="description" style="color: rgb(255, 152, 0)"><?php _e('Error: Email address is not valid!') ?></p><?php
+            }
+
+            ?>
+            <p class="description"><?php _e('Please provide an Email address so that we can send your data. You need to store your data to be able to verify it.') ?>
+            <?php
         }
 
         public function db_table_name()
@@ -448,6 +464,12 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
         {
             echo '<table style="display: inline-table;">';
             echo '<tr><th>Date created</th><th>Hash string (SHA256)</th><th>Status</th><th>Data</th></tr>';
+
+            if (!($response_json_body->hashes)) {
+                echo '</table>';
+                return;
+            }
+
             foreach ($response_json_body->hashes as $hash) {
                 // From milliseconds to seconds.
                 $date_created = $hash->date_created / 1000;
@@ -536,14 +558,21 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
 
                 // Display the paging information
                 echo '<p class="description">A list of all your hashes submitted with API key above: <br></p>';
-                echo '<div id="paging"><p>', $prevlink, ' Page ', $page, ' of ', $num_of_pages, ' pages, displaying ', $start, '-', $end, ' of ', $total, ' results ', $nextlink, ' </p></div>';
+
+                if ($num_of_pages > 0) {
+                    echo '<div id="paging"><p>', $prevlink, ' Page ', $page, ' of ', $num_of_pages, ' pages, displaying ', $start, '-', $end, ' of ', $total, ' results ', $nextlink, ' </p></div>';
+                }
 
                 // Get data from API.
                 $response = $this->get_hashes_for_api_key($offset, $limit);
                 $response_json_body = json_decode($response['body']);
 
                 // Parse response.
-                $this->parse_table($response_json_body);
+                if ($num_of_pages > 0) {
+                    $this->parse_table($response_json_body);
+                } else {
+                    echo '<p>No hashes yet were submitted using this API key.<br></p>';
+                }
 
                 return;
         }
