@@ -85,6 +85,10 @@ In order to update the plugin form an earlier version replace the old plugin fil
 * Some security issues fixes
 * Some minor fixes
 
+= 0.0.7 =
+* A bug fix, where hahs table was shown in wp_head.
+* Validators added to API key and email address to avoid errors.
+
 == Screenshots ==
 
 1. OriginStamp settings section screenshot-1.png.
