@@ -6,8 +6,8 @@ Contributors: Eugen Stroh, Thomas Hepp, Bela Gipp, André Gernandt
 Tags: time-stamping, verification, bitcoin
 License: MIT
 Requires at least: WordPress 4.7
-Tested up to: WordPress 4.8
-Stable tag: 0.0.6
+Tested up to: WordPress 4.9.4
+Stable tag: 0.0.7
 
 OriginStamp is an automated time-stamping solution for your WordPress posts using the OriginStamp API service.
 
@@ -16,7 +16,7 @@ OriginStamp is an automated time-stamping solution for your WordPress posts usin
 
 OriginStamp is a web-based, trusted timestamping service that uses the decentralized Bitcoin block chain to store anonymous, tamper-proof time stamps for any digital content.
 OriginStamp is free of charge and allows users to prove that they were the originator of certain information at a given point in time.
-This plugin embeds our OriginStamp service(http://www.originstamp.org/) as 3rd party service into WordPress. 
+This plugin embeds our OriginStamp service(http://www.originstamp.org/) as 3rd party service into WordPress.
 Each time you create or modify a new blog entry, an unique fingerprint is calculated.
 The original data cannot be guessed from the fingerprint. Therefore only the fingerprint (SHA-256) is submitted to OriginStamp.
 
@@ -81,9 +81,9 @@ In order to update the plugin form an earlier version replace the old plugin fil
 * DB table implemented to store hashed data.
 
 = 0.0.6 =
-* Stable version for official WordPress Plugin repository
-* Some security issues fixes
-* Some minor fixes
+* Stable version for official WordPress Plugin repository.
+* Some security issues fixes.
+* Some minor fixes.
 
 = 0.0.7 =
 * A bug fix, where hahs table was shown in wp_head.
