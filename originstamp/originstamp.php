@@ -4,7 +4,7 @@ defined('ABSPATH') OR exit;
  * Plugin Name: OriginStamp for Wordpress
  * Plugin URI: http://www.originstamp.org
  * description: Creates a tamper-proof timestamp of your content each time it is modified. The timestamp is created with the Bitcoin blockchain.
- * Version: 0.0.6
+ * Version: 0.0.7
  * Author: Eugen Stroh, Thomas Hepp, Bela Gipp, André Gernandt
  * Author URI: https://github.com/eustro, https://github.com/thhepp/, https://github.com/eustro
  * License: The MIT License (MIT)
