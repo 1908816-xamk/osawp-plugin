@@ -283,7 +283,7 @@ if (!class_exists('osawpPlugin')) {
         public function osawp_admin_page() {
             ?>
             <div class="wrap">
-                <h2><?php _e('OriginStamp attachments for WordPress'); ?></h2>
+                <h2><?php _e('OriginStamp Attachments for WordPress'); ?></h2>
                
                 <form action="options.php" method="post">
                     <?php settings_fields('osawp_settings'); ?>
@@ -298,39 +298,46 @@ if (!class_exists('osawpPlugin')) {
 
         public function osawp_description() {
             ?>
-            <p> This plugin sends a hash value of your media attachment files, like images and videos, to OriginStamp API. 
+            <p><i> OriginStamp is a web-based, trusted timestamping service that uses the decentralized blockchain to store anonymous, 
+                tamper-proof timestamps for any digital content. OriginStamp allows users to hash files, emails, or plain text, and subsequently
+                store the created hashes in the blockchain as well as retrieve and verify timestamps that have been committed to the blockchain. 
+                OriginStamp is free of charge and easy to use. It enables anyone, e.g., students, researchers, authors, journalists, or artists, 
+                to prove that they were the originator of certain information at a given point in time.</i> 
+                (Source: <a target="_blank" href="https://docs.originstamp.com/">docs.originstamp.com)</a>
+                <br><br>
+                This plugin sends a hash value of your media attachment files, like images and videos, to OriginStamp API. 
                 Then they will be saved to multiple blockchains as SHA256 encoded format, to proof the originality of your media files.
                 This proof is verifiable to anyone who have a copy of the original data and they also call these as timestamps. You can choose wether you like to send all new 
                 uploads to OriginStamp or manually send just particular files in the Media Library. However, you can send the file 
-                with same hash value only once. If you need to modify your original file and send a new version, you should create a new upload of it.</p><br>
-            <p><b>What content will be sent to OriginStamp API?</b>
+                with same hash value only once. If you need to modify your original file and send a new version, you should create a new upload of it.
+            </p><br>
+            <p><b>What content will be sent to OriginStamp API?</b></p>
             <p class="description">
                 In this version, only SHA256 value generated of the original file and attachment ID number in WordPress will be sent, nothing else.
             </p>
-            <p><b>When the data will be sent to OriginStamp API?</b>
+            <p><b>When the data will be sent to OriginStamp API?</b></p>
             <p class="description">
                 By default, only when you check "Send to OriginStamp" option in the media editing view and update the post.
                 Alternatively, you can also choose "Stamp new uploads automatically" here in the options, when all the new uploads will be send automatically.
                 Only attachments, that haven't sent before in exactly the same form, can be sent.
             </p>
-            <p><b>How I know, that my data is succesfully stamped?</b>
+            <p><b>How I know, that my data is succesfully stamped?</b></p>
             <p class="description">
                 You will see a hash code and a timestamp in media editing view, when OrigiStamp has sent the confirmation, that data has been succesfully saved to all three blockchains (Bitcoin, Ethereum and Aion). 
                 This is done by using webhooks provided by OrigiStamp API. More detailed information will be also saved to post meta of the attchment in WordPress. 
                 You are free to use this information in your own front-end implementations or with some other applications. You can always check statuses also from 
                 your own account in OriginStamp: <a target="_blank" href="https://my.originstamp.com/sessions/signin"><i class="fa fa-sign-in" aria-hidden="true"></i></a></p>
-            <p><b>How to verify a timestamp?</b>
-            <p><b>Does stamping to blockchain means that my files will be NFTs and what is the difference?</b>
+            <p><b>Does stamping to blockchain means that my files will be NFTs and what is the difference?</b></p>
             <p class="description">
                 No, you files won't be NFTs when they have been stamped. Saving a hash value of your files to a blockchain is providing only a proof of the originality, when the basic idea
                 behind the NFT is to provide a proof the ownership of any digital content by using smart contracts.
             </p>
-            <p><b>How to verify a timestamp?</b>
+            <p><b>How to verify a timestamp?</b></p>
             <p class="description">In order to verify the timestamp you would have to download the data, copy the string that is
                 stored in the text file and then use any sha256 calculator of your choice to hash the string. After that go to
-                OriginStamp and search for the hash. There you will also find further instructions and features.</p>
+                OriginStamp and search for the hash. There you will also find further instructions and features. Read more at: <a target="_blank" href="https://docs.originstamp.com/guide/originstamp.html"><i class="fa fa-sign-in" aria-hidden="true"></i></a></p>
             <p><b>Where do I get more Information?</b></p>
-            <p>Please visit our OriginStamp FAQ: <a target="_blank" href="https://originstamp.org/faq"><i class="fa fa-sign-in" aria-hidden="true"></i></a></p>
+            <p>Please visit at OriginStamp FAQ: <a target="_blank" href="https://docs.originstamp.com/"><i class="fa fa-sign-in" aria-hidden="true"></i></a></p>
             <?php
         }
 
