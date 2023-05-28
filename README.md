@@ -76,5 +76,5 @@ In order to update the plugin form an earlier version replace the old plugin fil
 
 ### Donate and support
 
-If you want to support my work, you can donate any amounts of Ethereums to: 0x8f2e099eF440FC7892e696791b43485260D919Ed
+If you want to support my work, you can donate any amounts of Ethereums to: 0x8f2e099eF440FC7892e696791b43485260D919Ed<br>
 Or support creators of the original plugin by choosing their premium plan here: https://originstamp.com/
