@@ -423,10 +423,10 @@ if (!class_exists('osawpPlugin')) {
             <a target="_blank" href="https://originstamp.com"><i class="fa fa-sign-in" aria-hidden="true"></i></a><br><br>
             Credits of the original plugin belongs to: <br><br>
 
-			<p>Eugen Stroh</p><br>
-			<p>Thomas Hepp</p><br>
-			<p>Bela Gipp</p><br>
-			<p>André Gernandt</p><br>             
+			<p>Eugen Stroh</p>
+			<p>Thomas Hepp</p>
+			<p>Bela Gipp</p>
+			<p>André Gernandt</p> 
             <?php
         }
     }
