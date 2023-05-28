@@ -1,12 +1,12 @@
 <?php
 defined('ABSPATH') OR exit;
 /*
- * Plugin Name: OriginStamp for Wordpress
- * Plugin URI: http://www.originstamp.org
- * description: Creates a tamper-proof timestamp of your content each time it is modified. The timestamp is created with the Bitcoin blockchain.
- * Version: 0.0.7
- * Author: Eugen Stroh, Thomas Hepp, Bela Gipp, André Gernandt
- * Author URI: https://github.com/eustro, https://github.com/thhepp/, https://github.com/eustro
+ * Plugin Name: OriginStamp attachments for WordPress
+ * Plugin URI: 
+ * description: Creates a tamper-proof timestamp of your media attachment files using OriginStamp API. This is not an original plugin by OriginStamp.
+ * Version: 1.0.0
+ * Author: Henri Tikkanen
+ * Author URI: http://www.henritikkanen.info
  * License: The MIT License (MIT)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -27,47 +27,43 @@ defined('ABSPATH') OR exit;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-register_activation_hook(__FILE__, array('ca1ee1698OriginStampPLForWP', 'on_activation'));
-register_uninstall_hook(__FILE__, array('ca1ee1698OriginStampPLForWP', 'on_uninstall'));
+register_activation_hook(__FILE__, array('osawpPlugin', 'on_activation'));
+register_uninstall_hook(__FILE__, array('osawpPlugin', 'on_uninstall'));
 
-if (!class_exists('ca1ee1698OriginStampPLForWP')) :
+if (!class_exists('osawpPlugin')) {
 
-    add_action('plugins_loaded', array('ca1ee1698OriginStampPLForWP', 'init'));
-    class ca1ee1698OriginStampPLForWP{
+    add_action('plugins_loaded', array('osawpPlugin', 'init'));
+    class osawpPlugin{
 
         protected static $instance;
 
-        public static function init()
-        {
+        public static function init() {
             is_null( self::$instance ) AND self::$instance = new self;
             return self::$instance;
         }
 
-        public function __construct()
-        {
-            define('ca1ee1698_originstamp', plugins_url(__FILE__));
+        public function __construct() {
+            define('osawp', plugins_url(__FILE__));
 
-            add_action('admin_head', array($this, 'admin_register_head'));
-            add_action('save_post', array($this, 'create_originstamp'));
-            add_action('admin_menu', array($this, 'originstamp_admin_menu'));
-            add_action('init', array($this, 'download_hash_data'));
-            add_action('template_redirect', array($this, 'download_hash_data'));
-
-            add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'originstamp_action_links'));
+            add_action('admin_head', array($this, 'osawp_admin_register_head'));
+            add_action('admin_menu', array($this, 'osawp_admin_menu'));
+			add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'osawp_action_links'));	
+			add_action('add_attachment', array($this, 'osawp_create_originstamp'));
+			add_filter('attachment_fields_to_edit',  array($this, 'osawp_field_edit'),null, 2);
+			add_filter('attachment_fields_to_edit',  array($this, 'osawp_get_blockchain_status'),null, 2);
+			add_filter('attachment_fields_to_save', array($this,'osawp_field_save'), null, 2);	
+			add_action('admin_post_nopriv_originstamp_approved', array($this, 'osawp_process_webhook'));
         }
 
         // Add font-awesome styles to Originstamp settings page.
-        public function admin_register_head()
-        {
+        public function osawp_admin_register_head() {
             // font-awesome repo at cdnjs
-            // register style
-            wp_register_style('originstamp_wp_admin_css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css', false, '1.0.0');
-            // set
-            wp_enqueue_style('originstamp_wp_admin_css');
+            wp_register_style('osawp_wp_admin_css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css', false, '1.0.0');
+			wp_add_inline_style('osawp_wp_admin_css', '.media-types-required-info {display:none;}.compat-attachment-fields th{padding-top:0;}');
+            wp_enqueue_style('osawp_wp_admin_css');
         }
 
-        public static function on_activation()
-        {
+        public static function on_activation() {
             // Create data table for local storage at activation.
             if (!current_user_can('activate_plugins'))
                 return;
@@ -76,9 +72,9 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
 
             $charset_collate = $wpdb->get_charset_collate();
             $options = self::get_options();
-            $options['db_table_name'] = 'ca1ee1698_hash_data';
-            update_option('ca1ee1698_originstamp', $options);
-            $table_name = $wpdb->prefix . $options['db_table_name'];
+            $options['api_version'] = 'v4';
+            update_option('osawp_settings', $options);
+            $table_name = $wpdb->prefix . 'osawp_hash_data';
 
             $sql = "CREATE TABLE $table_name (
                         sha256 varchar(64) UNIQUE NOT NULL,
@@ -86,7 +82,7 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
                         post_title tinytext NOT NULL,
                         post_content longtext NOT NULL,
                         PRIMARY KEY (sha256)
-                    ) $charset_collate;";
+                    ) $charset_collate";
 
             if (is_admin())
                 require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -101,67 +97,197 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
             }
         }
 
-        public static function on_uninstall()
-        {
+        public static function on_uninstall() {
             if (!current_user_can('delete_plugins'))
                 return;
 
             global $wpdb;
             $options = self::get_options();
-            $table_name = $wpdb->prefix . $options['db_table_name'];
+            $table_name = $wpdb->prefix . 'osawp_hash_data';
             $sql = $wpdb->prepare('DROP TABLE IF EXISTS ' . $table_name, $table_name);
             $wpdb->query($sql);
 
-            delete_option('ca1ee1698_originstamp');
-            delete_site_option('ca1ee1698_originstamp');
+            delete_option('osawp_settings');
+            delete_site_option('osawp_settings');
         }
 
-        public function originstamp_admin_menu()
-        {
-            register_setting('ca1ee1698_originstamp', 'ca1ee1698_originstamp');
-
-            add_options_page(__('OriginStamp'), __('OriginStamp'), 'manage_options', 'ca1ee1698_originstamp', array($this, 'originstamp_admin_page'));
-
-            add_settings_section('ca1ee1698_originstamp', __('Settings'), array($this, 'settings_section'), 'ca1ee1698_originstamp');
-            add_settings_field('originstamp_description', __('Description'), array($this, 'description'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
-            add_settings_field('originstamp_api_key', __('API Key'), array($this, 'api_key'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
-            add_settings_field('originstamp_sender_email', __('Sender Email'), array($this, 'sender_email'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
-            add_settings_field('originstamp_db_status', __('DB status'), array($this, 'check_db_status'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
-            add_settings_field('oroginstamp_hash_table', __('Hash table'), array($this, 'hashes_for_api_key'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
-            add_settings_field('originstamp_dev', __('Developers'), array($this, 'dev_info'), 'ca1ee1698_originstamp', 'ca1ee1698_originstamp');
+        public function osawp_admin_menu() {
+            register_setting('osawp_settings', 'osawp_settings');
+            add_options_page(__('OriginStamp Attachments'), __('OriginStamp Attachments'), 'manage_options', 'osawp_settings', array($this, 'osawp_admin_page'));
+            add_settings_section('osawp_settings', __('Settings'), array($this, 'osawp_settings_section'), 'osawp_settings');
+            add_settings_field('osawp_description', __('Description'), array($this, 'osawp_description'), 'osawp_settings', 'osawp_settings');
+            add_settings_field('osawp_api_key', __('API key'), array($this, 'osawp_api_key'), 'osawp_settings', 'osawp_settings');
+            add_settings_field('osawp_api_version', __('API version'), array($this, 'osawp_api_version'), 'osawp_settings', 'osawp_settings');
+			add_settings_field('osawp_stamp_all', __('Stamp new uploads automatically'), array($this, 'osawp_stamp_all'), 'osawp_settings', 'osawp_settings');
+			add_settings_field('osawp_db_status', __('DB status'), array($this, 'osawp_check_db_status'), 'osawp_settings', 'osawp_settings');
+			add_settings_field('osawp_dev', __('Developers'), array($this, 'osawp_dev_info'), 'osawp_settings', 'osawp_settings');
         }
 
-        public function originstamp_action_links($links)
-        {
-            array_unshift($links, '<a href="' . admin_url('options-general.php?page=ca1ee1698_originstamp') . '">Settings</a>');
+        public function osawp_action_links($links) {
+            array_unshift($links, '<a href="' . admin_url('options-general.php?page=osawp_settings') . '">Settings</a>');
             return $links;
         }
+		
+        // Show blockchain status	
+		public function osawp_get_blockchain_status ( $form_fields, $post ) {
+	
+			global $pagenow;
+			
+			if ($pagenow == 'post.php') {
 
-        public function settings_section()
-        {
-            // do nothing
-            ;
+				$blockchain_status = get_post_meta( $post->ID, 'blockchain', true );	
+				$blockchain_status ? $status_html = '<b>This attachment is succesfully stamped by the hash string: </b>' . 
+                $blockchain_status['hash_string'] . ' <b>at</b> ' . date("m.d.y G:i:s",$blockchain_status['date_created']/1000) .' (UTC)' : 
+                $status_html = '<b>This attachment is not stamped yet!</b>';
+
+				$form_fields['blockchain_status'] = array(
+					'label' => 'Blockchain status:',
+					'input' => 'html',
+					'html' => $status_html,
+				);
+			}
+			return $form_fields;
+		}
+
+		// Show and save custom checkbox attachment field	
+		public function osawp_field_edit ( $form_fields, $post ) {
+
+			global $pagenow;
+
+			if ($pagenow == 'post.php') {
+				
+			$originstamp = (bool) get_post_meta($post->ID, 'originstamp', true);
+			$blockchain_status = get_post_meta( $post->ID, 'blockchain', true );
+				
+			$form_fields['originstamp'] = array(
+				'label' => 'Send to OriginStamp?',
+				'input' => 'html',
+				'html' => '<label for="attachments-'.$post->ID.'-originstamp"> '.
+				'<input type="checkbox" id="attachments-'.$post->ID.'-originstamp" name="attachments['.$post->ID.'][originstamp]" value="1"'.($originstamp ? 'style="display:none;"' : '').'/>' . ($originstamp ? '<b>This attachment seems already sent to OriginStamp!</b>' : ''),
+				);
+			}					
+			return $form_fields;
+		}
+		
+		public function osawp_field_save ($post, $attachment) {  
+			if( isset($attachment['originstamp']) ){  
+				$this->osawp_create_originstamp($post['ID']);
+			}
+			return $post;  
+		}
+
+        private function osawp_insert_hash_in_table($hash_string, $post_title, $image_file) {
+            global $wpdb;
+            $options = self::get_options();
+            $table_name = $wpdb->prefix . 'osawp_hash_data';
+            $wpdb->insert($table_name,
+                array('sha256' => $hash_string, 'post_title' => $post_title, 'post_content' => $image_file),
+                array());
         }
 
-        private static function get_options()
-        {
-            $options = (array)get_option('ca1ee1698_originstamp');
+        private function osawp_retrieve_hash_from_table($hash_string) {
+            global $wpdb;
+            $options = self::get_options();
+            $table_name = $wpdb->prefix . 'osawp_hash_data';
+            $sql = "SELECT * FROM $table_name WHERE sha256 = \"$hash_string\"";
+            $result = $wpdb->get_row($wpdb->prepare($sql, $hash_string));
+            if ($result) {
+                return $result->sha256;
+            }
+            return null;
+        }
+
+        // Create hash value, save to database and prepare for sending
+        public function osawp_create_originstamp($attachment_id) {
+			global $pagenow;
+			$options = self::get_options();
+			
+			!empty($options['stamp_all']) ? $stamp_all = true : $stamp_all = false;
+			if ( $stamp_all && wp_is_post_revision($attachment_id) ) {
+				return;
+			} elseif ( $stamp_all || !$stamp_all && $pagenow == 'post.php' ) {
+					
+				$post_title = preg_replace(
+					"/[\n\r ]+/",//Also more than one space
+					" ",//space
+					wp_strip_all_tags(get_the_title($attachment_id)));
+
+				$image_file = wp_get_attachment_url( $attachment_id );
+				$hash_string = hash_file('sha256', $image_file);
+
+                if ($this->osawp_retrieve_hash_from_table($hash_string) === $hash_string) {
+                    return;
+                }
+
+				$body['hash'] = $hash_string;
+				$body['comment'] = $attachment_id;
+
+				$body['notifications'] [] = Array(
+					'currency' => 0,
+					'notification_type' => 1,
+					'target' => get_site_url() . '/wp-admin/admin-post.php?action=originstamp_approved'
+				);
+				
+				$this->osawp_insert_hash_in_table($hash_string, $post_title, $image_file);
+				update_post_meta($attachment_id, 'originstamp', true );
+				$this->osawp_send_to_originstamp_api($body);
+			}
+        }
+
+        // Send computed hash value to OriginStamp.
+        private function osawp_send_to_originstamp_api($body) {
+            
+            $options = self::get_options();
+            $response = wp_remote_post('https://api.originstamp.com/v4/timestamp/create', array(
+                'method' => "POST",
+                'timeout' => 45,
+                'redirection' => 5,
+                'httpversion' => "1.1",
+                'blocking' => true,
+                'headers' => array(
+                    'content-type' => "application/json",
+                    'Authorization' => $options['api_key']
+                ),
+                'body' => json_encode($body),
+                'cookies' => array()
+            ));
+
+            if (is_wp_error($response)) {
+                $error_message = $response->get_error_message();
+                $message = "Sorry, we had some issues posting your data to OriginStamp:\n";
+
+                return $error_message;
+            }
+            return $response;
+        }
+		
+		// Process webhook 
+		public function osawp_process_webhook() {
+
+			$request = file_get_contents('php://input');
+			$data = json_decode($request, true);
+			$post_id = $data['comment'];
+			update_post_meta( $post_id, 'blockchain', $data );
+		}
+
+        // Options section
+        public function osawp_settings_section() {
+            // do nothing
+        }
+
+        private static function get_options() {
+            $options = (array)get_option('osawp_settings');
             return $options;
         }
 
-        public function originstamp_admin_page()
-        {
+        public function osawp_admin_page() {
             ?>
             <div class="wrap">
-                <h2><?php _e('OriginStamp'); ?></h2>
-                <?php if (!empty($options['invalid_emails']) && $_GET['settings-updated']) : ?>
-                    <div class="error">
-                        <p><?php ?></p>
-                    </div>
-                <?php endif; ?>
+                <h2><?php _e('OriginStamp attachments for WordPress'); ?></h2>
+               
                 <form action="options.php" method="post">
-                    <?php settings_fields('ca1ee1698_originstamp'); ?>
-                    <?php do_settings_sections('ca1ee1698_originstamp'); ?>
+                    <?php settings_fields('osawp_settings'); ?>
+                    <?php do_settings_sections('osawp_settings'); ?>
                     <p class="submit">
                         <input type="submit" class="button-primary" value="<?php esc_attr_e('Save Changes'); ?>"/>
                     </p>
@@ -170,240 +296,110 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
             <?php
         }
 
-        public function download_hash_data()
-        {
-            // Download a data set from plugin data table.
-            if (isset($_GET['d'])) {
-                $hash_string = $_GET['d'];
-                if (!ctype_xdigit($hash_string))
-                    exit('Hash string invalid');
-                $data = $this->retrieve_hash_from_table($hash_string);
-                if (!$data)
-                    exit('Hash string not found in database.');
-                header("Content-type: application/x-msdownload", true, 200);
-                header("Content-Disposition: attachment; filename=$hash_string.txt");
-                header("Pragma: no-cache");
-                header("Expires: 0");
-                echo $data;
-                exit();
-            }
-        }
-
-        private function insert_hash_in_table($hash_string, $post_title, $post_content)
-        {
-            global $wpdb;
-            $options = self::get_options();
-            $table_name = $wpdb->prefix . $options['db_table_name'];
-            $wpdb->insert($table_name,
-                array('sha256' => $hash_string, 'post_title' => $post_title, 'post_content' => $post_content),
-                array());
-        }
-
-        private function retrieve_hash_from_table($hash_string)
-        {
-            global $wpdb;
-            $options = self::get_options();
-            $table_name = $wpdb->prefix . $options['db_table_name'];
-            $sql = "SELECT * FROM $table_name WHERE sha256 = \"$hash_string\"";
-            $result = $wpdb->get_row($wpdb->prepare($sql, $hash_string));
-            $data = $result->post_title . $result->post_content;
-
-            return $data;
-        }
-
-        public function create_originstamp($post_id)
-        {
-            // Create a SHA256 value from WP post or edit.
-            if (wp_is_post_revision($post_id))
-                return;
-            $title = preg_replace(
-                "/[\n\r ]+/",//Also more than one space
-                " ",//space
-                wp_strip_all_tags(get_the_title($post_id)));
-            $content = preg_replace(
-                "/[\n\r ]+/",//Also more than one space
-                " ",//space
-                wp_strip_all_tags(get_post_field('post_content', $post_id)));
-
-            $data = $title . $content;
-            $hash_string = hash('sha256', $data);
-            $body['hash_string'] = $hash_string;
-
-            $this->insert_hash_in_table($hash_string, $title, $content);
-
-            $this->send_to_originstamp_api($body, $hash_string);
-            $this->send_confirm_email($data, $hash_string);
-        }
-
-        private function send_to_originstamp_api($body, $hashString)
-        {
-            // Send computed hash value to OriginStamp.
-            $options = self::get_options();
-            $body['email'] = $options['email'];
-
-            $response = wp_remote_post('https://api.originstamp.org/api/' . $hashString, array(
-                'method' => "POST",
-                'timeout' => 45,
-                'redirection' => 5,
-                'httpversion' => "1.1",
-                'blocking' => true,
-                'headers' => array(
-                    'content-type' => "application/json",
-                    'Authorization' => $options['api_key']
-                ),
-                'body' => json_encode($body),
-                'cookies' => array()
-
-            ));
-
-            if (is_wp_error($response)) {
-                $error_message = $response->get_error_message();
-                $message = "Sorry, we had some issues posting your data to OriginStamp:\n";
-                wp_mail($options['email'], "Originstamp: Error.", $message . $error_message);
-
-                return $error_message;
-            }
-
-            return $response;
-        }
-
-        private function send_confirm_email($data, $hash_string)
-        {
-            // Send confirmation Email to user.
-            // I no Email address provided, nothing will be sent.
-            $instructions = "Please store this Email. You need to hash following value with a SHA256:\n\n";
-            $header = "================ START TEXT =================\n";
-            $footer = "\n================ END TEXT ===================";
-            $options = self::get_options();
-            if (!$options['email']) {
-                return '';
-            }
-            $msg = $instructions . $header . $data . $footer;
-            $headers = "Content-type: text/plain";
-            $temp = fopen('php://temp', 'w+');
-            fwrite($temp, $data);
-            rewind($temp);
-            fpassthru($temp);
-            $response = wp_mail($options['email'], "OriginStamp " . $hash_string, $msg, $headers, array($temp));
-            fclose($temp);
-
-            return $response;
-        }
-
-        private function get_hashes_for_api_key($offset, $records)
-        {
-            // Get hash table for API key.
-            /*POST fields for table request.
-             email
-             hash_string
-             comment
-             date_created
-             api_key
-             offset
-             records*/
-            $options = self::get_options();
-            $body['api_key'] = $options['api_key'];
-
-            if ($body['api_key'] == '')
-                return array();
-
-            // Start offset
-            $body['offset'] = $offset;
-            // Number of records
-            $body['records'] = $records;
-
-            $response = wp_remote_post('https://api.originstamp.org/api/table', array(
-                'method' => "POST",
-                'timeout' => 45,
-                'redirection' => 5,
-                'httpversion' => "1.1",
-                'blocking' => true,
-                'headers' => array(
-                    'content-type' => "application/json",
-                    'Authorization' => $options['api_key']
-                ),
-                'body' => json_encode($body),
-                'cookies' => array()
-
-            ));
-
-            return $response;
-        }
-
-        public function dev_info()
-        {
+        public function osawp_description() {
             ?>
-            Visit us on OriginStamp: <a target="_blank" href="https://app.originstamp.org/home"><i class="fa fa-sign-in" aria-hidden="true"></i></a><br><br>
-            Or contact us:<br>
-            <table id="dev_info" style="display: inline-table;">
-                <tr>
-                    <td>
-                        Eugen Stroh
-                    </td>
-                    <td>
-                        <a target="_top" href="mailto:eugen.stroh@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Thomas Hepp
-                    </td>
-                    <td>
-                        <a target="_top" href="mailto:thomas.hepp@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        Bela Gipp
-                    </td>
-                    <td>
-                        <a target="_top" href="mailto:bela.gipp@uni-konstanz.de?Subject=OriginStamp-wp%20plugin">contact</a>
-                    </td>
-                </tr
-                <tr>
-                    <td>
-                        André Gernandt
-                    </td>
-                    <td>
-                        <a target="_top" href="mailto:andre.gernandt@gmail.com?Subject=OriginStamp-wp%20plugin">contact</a>
-                    </td>
-                </tr
-            </table>
-            <?php
-        }
-
-        public function description()
-        {
-            ?>
-            <p> This plugin saves and stores every single stage of your posts. Anytime you hit the save button while creating or
-                editing a post, we will save the stage of your work in local data table. The timestamp is secure within the
-                Bitcoin network and verifiable to anyone who is in possession of a coyp of the data.</p><br>
-            <p><b>What content is saved?</b>
-            <p class="description">We save the post title, the post body as plain text where all layout tags. Line breaks are
-                converted to spaces.</p>
-            <p><b>What content is timestamped?</b>
-            <p class="description">We save the post title, the post body as plain text. To hash the post we concatenate the post
-                title and the post body with a space in between. The sha256 of the generated string is being sent to originStamp
-                to be timestamped.</p>
-            <p><b>How to verify a timestamp?</b>';
+            <p> This plugin sends a hash value of your media attachment files, like images and videos, to OriginStamp API. 
+                Then they will be saved to multiple blockchains as SHA256 encoded format, to proof the originality of your media files.
+                This proof is verifiable to anyone who have a copy of the original data and they also call these as timestamps. You can choose wether you like to send all new 
+                uploads to OriginStamp or manually send just particular files in the Media Library. However, you can send the file 
+                with same hash value only once. If you need to modify your original file and send a new version, you should create a new upload of it.</p><br>
+            <p><b>What content will be sent to OriginStamp API?</b>
+            <p class="description">
+                In this version, only SHA256 value generated of the original file and attachment ID number in WordPress will be sent, nothing else.
+            </p>
+            <p><b>When the data will be sent to OriginStamp API?</b>
+            <p class="description">
+                By default, only when you check "Send to OriginStamp" option in the media editing view and update the post.
+                Alternatively, you can also choose "Stamp new uploads automatically" here in the options, when all the new uploads will be send automatically.
+                Only attachments, that haven't sent before in exactly the same form, can be sent.
+            </p>
+            <p><b>How I know, that my data is succesfully stamped?</b>
+            <p class="description">
+                You will see a hash code and a timestamp in media editing view, when OrigiStamp has sent the confirmation, that data has been succesfully saved to all three blockchains (Bitcoin, Ethereum and Aion). 
+                This is done by using webhooks provided by OrigiStamp API. More detailed information will be also saved to post meta of the attchment in WordPress. 
+                You are free to use this information in your own front-end implementations or with some other applications. You can always check statuses also from 
+                your own account in OriginStamp: <a target="_blank" href="https://my.originstamp.com/sessions/signin"><i class="fa fa-sign-in" aria-hidden="true"></i></a></p>
+            <p><b>How to verify a timestamp?</b>
+            <p><b>Does stamping to blockchain means that my files will be NFTs and what is the difference?</b>
+            <p class="description">
+                No, you files won't be NFTs when they have been stamped. Saving a hash value of your files to a blockchain is providing only a proof of the originality, when the basic idea
+                behind the NFT is to provide a proof the ownership of any digital content by using smart contracts.
+            </p>
+            <p><b>How to verify a timestamp?</b>
             <p class="description">In order to verify the timestamp you would have to download the data, copy the string that is
                 stored in the text file and then use any sha256 calculator of your choice to hash the string. After that go to
                 OriginStamp and search for the hash. There you will also find further instructions and features.</p>
             <p><b>Where do I get more Information?</b></p>
-            <p>Please visit our OriginStamp FAQ: <a target="_blank" href="https://originstamp.org/faq">
-                    <i class="fa fa-sign-in" aria-hidden="true"></i>
-                </a></p>
-            <p><b>You still got questions?</b></p>
-            <p>Fee free to contact us, our emails are provide in the develpoer information on the bottom of this page.</p>
+            <p>Please visit our OriginStamp FAQ: <a target="_blank" href="https://originstamp.org/faq"><i class="fa fa-sign-in" aria-hidden="true"></i></a></p>
             <?php
         }
 
-        public function check_db_status()
-        {
+        public function osawp_api_key() {
+            // Read in API key.
+            $options = self::get_options();
+            isset($options['api_key']) ? $api_key = $options['api_key'] : $api_key = '';
+
+            $valid_uuid = '/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i';
+            if (isset($api_key) ) {
+                ?><input title="API key" type="text" name="osawp_settings[api_key]" size="40"
+                     value="<?php echo $api_key; ?>"/><?php
+            } else {
+                ?><input title="API key" type="text" name="osawp_settings[api_key]" size="40"
+                     value=""/><?php
+            }
+            // Check, if API key is a valid uuid and show error message, if not.
+            if (!preg_match($valid_uuid, $api_key) && !($api_key == '')) {
+                ?><p class="description" style="color: rgb(255, 152, 0)"><?php _e('Error: API key is invalid! Please check that you copied all characters or contact OriginStamp.') ?></p><?php
+            }
+            ?><p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
+            <a target="_blank" href="https://originstamp.org/dev">
+                <i class="fa fa-sign-in" aria-hidden="true"></i>
+            </a></p><?php             
+        }
+
+        public function osawp_api_version() {
+            // Read in API key.
+            $options = self::get_options();
+            $api_version = $options['api_version'];
+
+            $valid_uuid = '/^v[0-9]$/i';
+            if (isset($api_version) ) {
+                ?><input title="API version" type="text" name="osawp_settings[api_version]" size="40"
+                     value="<?php echo $api_version; ?>"/><?php
+            } else {
+                ?><input title="API version" type="text" name="osawp_settings[api_version]" size="40"
+                     value=""/><?php
+            }
+            // Check, if API key is a valid uuid and show error message, if not.
+            if (!preg_match($valid_uuid, $options['api_version']) && !($options['api_version'] == '')) {
+                ?><p class="description" style="color: rgb(255, 152, 0)"><?php _e('Error: API version is invalid! Please check, that your input contains character "v" and number 1-9.') ?></p><?php
+            }
+            ?><p class="description"><?php _e('A current API version is required to creating a timestamp through the OriginStamp API. If default version is not working, please find the current version here:') ?>
+            <a target="_blank" href="https://api.originstamp.com/swagger/swagger-ui.html">
+                <i class="fa fa-sign-in" aria-hidden="true"></i>
+            </a></p><?php
+        }
+		
+		public function osawp_stamp_all() {
+            // Stamp all:
+            $options = self::get_options();
+			if ( !empty($options['stamp_all']))  {
+				$stamp_all = $options['stamp_all'];
+			} else {
+				$stamp_all = false;
+			}
+
+            ?>
+			<input type="checkbox" id="osawp_settings[stamp_all]" name="osawp_settings[stamp_all]" value="1" <?php if ($stamp_all) { echo 'checked="checked"'; } ?> />    
+            <p class="description"><?php _e('Check this option if you want all new media files to be uploaded automatically.') ?> <p>				       
+            <?php		
+        }
+
+        public function osawp_check_db_status() {
             global $wpdb;
             $options = self::get_options();
-            $table_name = $wpdb->prefix . $options['db_table_name'];
-            if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE '$table_name'", $table_name)) == $table_name) {
+            $table_name = $wpdb->prefix . 'osawp_hash_data';
+            if ($wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE '%s'", $table_name)) === $table_name) {
                 echo '<p style="color: rgb(0, 150, 136)">Database table created: ' . $table_name . ' . </p>';
             } else {
                 echo '<p style="color: rgb(255, 152, 0)">ERROR: Data table does not exist: ' . $table_name . '</p>';
@@ -411,171 +407,20 @@ if (!class_exists('ca1ee1698OriginStampPLForWP')) :
             echo '<p class="description">Here you can check status of the database that stores hashed post data.</p>';
         }
 
-        public function api_key()
-        {
-            // Read in API key.
-            $options = self::get_options();
-
-            $valid_uuid = '/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i';
-
-            ?><input title="API key" type="text" name="ca1ee1698_originstamp[api_key]" size="40"
-                     value="<?php echo $options['api_key'] ?>"/><?php
-
-            // Check, if API key is a valid uuid and show error message, if not.
-            if (!preg_match($valid_uuid, $options['api_key']) && !($options['api_key'] == '')) {
-                ?><p class="description" style="color: rgb(255, 152, 0)"><?php _e('Error: API key invalid! Please check, if you copied all sign or if there are any typos.') ?></p><?php
-            }
-            ?><p class="description"><?php _e('An API key is required to create timestamps. Receive your personal key here:') ?>
-            <a target="_blank" href="https://originstamp.org/dev">
-                <i class="fa fa-sign-in" aria-hidden="true"></i>
-            </a></p><?php
-
-                ?>
-                    <input title="DB table name" type="hidden" name="ca1ee1698_originstamp[db_table_name]" value="<?php echo $options['db_table_name'] ?>"/>
-                <?php
-        }
-
-        public function sender_email()
-        {
-            // Email address:
-            $options = self::get_options();
+        public function osawp_dev_info() {
             ?>
-            <input title="Email" type="text" name="ca1ee1698_originstamp[email]" size="40" value="<?php echo $options['email'] ?>"/>
+            This plugin version is published by <a target="_blank" href="https://henritikkanen.info">Henri Tikkanen</a>, 
+            but it's based on an early development stage plugin created by guys from OriginStamp. Any support is not inculuded
+            and you use this plugin by your own by your own risk.
+            For getting more information about OriginStamp, please visit their site: 
+            <a target="_blank" href="https://originstamp.com"><i class="fa fa-sign-in" aria-hidden="true"></i></a><br><br>
+            Credits of the original plugin belongs to: <br><br>
+
+			<p>Eugen Stroh</p><br>
+			<p>Thomas Hepp</p><br>
+			<p>Bela Gipp</p><br>
+			<p>André Gernandt</p><br>             
             <?php
-
-            if (!filter_var($options['email'], FILTER_VALIDATE_EMAIL) && !($options['email'] == '')) {
-                ?><p class="description" style="color: rgb(255, 152, 0)"><?php _e('Error: Email address is not valid!') ?></p><?php
-            }
-
-            ?>
-            <p class="description"><?php _e('Please provide an Email address so that we can send your data. You need to store your data to be able to verify it.') ?>
-            <?php
-        }
-
-        public function db_table_name()
-        {
-            $options = self::get_options();
-            ?>
-                <input type="hidden" name="ca1ee1698_originstamp[db_table_name]" value="<?php echo $options['db_table_name'] ?>"/>
-            <?php
-        }
-
-        private function parse_table($response_json_body)
-        {
-            echo '<table style="display: inline-table;">';
-            echo '<tr><th>Date created</th><th>Hash string (SHA256)</th><th>Status</th><th>Data</th></tr>';
-
-            if (!($response_json_body->hashes)) {
-                echo '</table>';
-                return;
-            }
-
-            foreach ($response_json_body->hashes as $hash) {
-                // From milliseconds to seconds.
-                $date_created = $hash->date_created / 1000;
-                $submit_status = $hash->submit_status->multi_seed;
-                $hash_string = $hash->hash_string;
-                echo '<tr>';
-                echo '<td>' . gmdate("Y-m-d H:i:s", $date_created) . '</td>';
-
-                echo '<td>';
-                echo '<a href="https://originstamp.org/s/'
-                    . $hash_string
-                    . '"'
-                    . ' target="_blank"'
-                    . '">'
-                    . $hash_string
-                    . '</a>';
-                echo '</td>';
-                echo '<td>';
-                if ($submit_status == 3) {
-                    try {
-                        echo '<i style="color: rgb(0, 150, 136)" class="fa fa-check-circle-o" aria-hidden="true"></i>';
-                    } catch (Exception $e) {
-                        echo $submit_status;
-                    }
-                } else {
-                    try {
-                        echo '<i style="color: rgb(255, 152, 0)" class="fa fa-clock-o" aria-hidden="true"></i>';
-                    } catch (Exception $e) {
-                        echo $submit_status;
-                    }
-                }
-                echo '</td>';
-                echo '<td>';
-                echo "<a href=\"?page=ca1ee1698_originstamp&d=$hash_string\" title=\"download\" target=\"_blank\">download</a>";
-                echo '</td>';
-                echo '</tr>';
-            }
-            echo '</table>';
-        }
-
-        public function hashes_for_api_key()
-        {
-                // Maximum number of pages the API will return.
-                $limit = 25;
-
-                // Get first record, to determine, how many records there are overall.
-                $get_page_info = $this->get_hashes_for_api_key(0, 1);
-                if (!$get_page_info)
-                    return;
-
-                // Handle errors.
-                if (is_wp_error($get_page_info)) {
-                    $error_message = $get_page_info->get_error_message();
-                    echo '<p style="color: rgb(255, 152, 0)">An error occurred while retrieving hash table:</p><br/>' . $error_message;
-                    return;
-                }
-
-                // Extract bory from response.
-                $page_info_json_obj = json_decode($get_page_info['body']);
-
-                // Total number of records in the database.
-                $total = $page_info_json_obj->total_records;
-
-                // Overall number of pages
-                $num_of_pages = ceil($page_info_json_obj->total_records / $limit);
-
-                // GET current page
-                $page = min($num_of_pages, filter_input(INPUT_GET, 'p', FILTER_VALIDATE_INT, array(
-                    'options' => array(
-                        'default' => 1,
-                        'min_range' => 1,
-                    ),
-                )));
-                // Calculate the offset for the query
-                $offset = ($page - 1) * $limit;
-
-                // Some information to display to the user
-                $start = $offset + 1;
-                $end = min(($offset + $limit), $total);
-
-                // The "back" link
-                $prevlink = ($page > 1) ? '<a href="?page=ca1ee1698_originstamp&p=1" title="First page">&laquo;</a> <a href="?page=ca1ee1698_originstamp' . '&p=' . ($page - 1) . '" title="Previous page">&lsaquo;</a>' : '<span class="disabled">&laquo;</span> <span class="disabled">&lsaquo;</span>';
-
-                // The "forward" link
-                $nextlink = ($page < $num_of_pages) ? '<a href="?page=ca1ee1698_originstamp' . '&p=' . ($page + 1) . '" title="Next page">&rsaquo;</a> <a href="?page=ca1ee1698_originstamp' . '&p=' . $num_of_pages . '" title="Last page">&raquo;</a>' : '<span class="disabled">&rsaquo;</span> <span class="disabled">&raquo;</span>';
-
-                // Display the paging information
-                echo '<p class="description">A list of all your hashes submitted with API key above: <br></p>';
-
-                if ($num_of_pages > 0) {
-                    echo '<div id="paging"><p>', $prevlink, ' Page ', $page, ' of ', $num_of_pages, ' pages, displaying ', $start, '-', $end, ' of ', $total, ' results ', $nextlink, ' </p></div>';
-                }
-
-                // Get data from API.
-                $response = $this->get_hashes_for_api_key($offset, $limit);
-                $response_json_body = json_decode($response['body']);
-
-                // Parse response.
-                if ($num_of_pages > 0) {
-                    $this->parse_table($response_json_body);
-                } else {
-                    echo '<p>No hashes yet were submitted using this API key.<br></p>';
-                }
-
-                return;
         }
     }
-endif
-    ?>
+}
