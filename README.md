@@ -32,7 +32,7 @@ A: By default, only when you check "Send to OriginStamp" option in the media edi
 Q: How I know, that my data is succesfully stamped?<br>
 A: You will see a hash code and a timestamp in media editing view, when OrigiStamp has sent the confirmation, that data is succesfully saved to one or more blockchains.
 This is done by using webhooks provided by OrigiStamp API. More detailed information will be also saved to post meta of the attchment in WordPress. 
-You are free to use this information in your own front-end implementations or with some other applications. You can always check statuses also from your own account in OriginStamp: 
+You are free to use this information in your own front-end implementations or with some other applications. You can always check statuses also from your own account in OriginStamp: https://my.originstamp.com/sessions/signin.
 
 Q: Does stamping to blockchain means that my files will be NFTs and what is the difference?<br>
 A: No, you files won't be NFTs when they have been stamped. Saving a hash value of your files to a blockchain is providing only a proof of the originality, when the basic idea behind the NFT
