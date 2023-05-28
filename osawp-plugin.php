@@ -327,10 +327,10 @@ if (!class_exists('osawpPlugin')) {
                 This is done by using webhooks provided by OrigiStamp API. More detailed information will be also saved to post meta of the attchment in WordPress. 
                 You are free to use this information in your own front-end implementations or with some other applications. You can always check statuses also from 
                 your own account in OriginStamp: <a target="_blank" href="https://my.originstamp.com/sessions/signin"><i class="fa fa-sign-in" aria-hidden="true"></i></a></p>
-            <p><b>Does stamping to blockchain means that my files will be NFTs and what is the difference?</b></p>
+            <p><b>Does stamping means that my files will be also minted as NFTs or what is the difference?</b></p>
             <p class="description">
-                No, you files won't be NFTs when they have been stamped. Saving a hash value of your files to a blockchain is providing only a proof of the originality, when the basic idea
-                behind the NFT is to provide a proof the ownership of any digital content by using smart contracts.
+                No, your files won't be minted as NFTs when they have been stamped. Saving a hash value of your files to a blockchain is providing only a proof of the originality, when the basic idea
+                behind NFT is to provide a proof of the ownership of any digital content by using smart contracts.
             </p>
             <p><b>How to verify a timestamp?</b></p>
             <p class="description">In order to verify the timestamp you would have to download the data, copy the string that is
