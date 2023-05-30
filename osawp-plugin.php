@@ -1,5 +1,5 @@
 <?php
-defined('ABSPATH') OR exit;
+
 /*
  * Plugin Name: OriginStamp attachments for WordPress
  * Plugin URI: 
@@ -27,6 +27,9 @@ defined('ABSPATH') OR exit;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+defined( 'ABSPATH' ) or die();
+
 register_activation_hook(__FILE__, array('osawpPlugin', 'on_activation'));
 register_uninstall_hook(__FILE__, array('osawpPlugin', 'on_uninstall'));
 
