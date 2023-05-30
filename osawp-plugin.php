@@ -44,7 +44,6 @@ if (!class_exists('osawpPlugin')) {
 
         public function __construct() {
             define('osawp', plugins_url(__FILE__));
-
             add_action('admin_head', array($this, 'osawp_admin_register_head'));
             add_action('admin_menu', array($this, 'osawp_admin_menu'));
 			add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'osawp_action_links'));	
@@ -77,11 +76,11 @@ if (!class_exists('osawpPlugin')) {
             $table_name = $wpdb->prefix . 'osawp_hash_data';
 
             $sql = "CREATE TABLE $table_name (
-                        sha256 varchar(64) UNIQUE NOT NULL,
-                        time datetime DEFAULT CURRENT_TIMESTAMP,
-                        post_title tinytext NOT NULL,
-                        post_content longtext NOT NULL,
-                        PRIMARY KEY (sha256)
+            		sha256 varchar(64) UNIQUE NOT NULL,
+					time datetime DEFAULT CURRENT_TIMESTAMP,
+                    post_title tinytext NOT NULL,
+                    post_content longtext NOT NULL,
+                    PRIMARY KEY (sha256)
                     ) $charset_collate";
 
             if (is_admin())
@@ -137,7 +136,7 @@ if (!class_exists('osawpPlugin')) {
 
 				$blockchain_status = get_post_meta( $post->ID, 'blockchain', true );	
 				$blockchain_status ? $status_html = '<b>This attachment is succesfully stamped by the hash string: </b>' . 
-                $blockchain_status['hash_string'] . ' <b>at</b> ' . date("m.d.y G:i:s",$blockchain_status['date_created']/1000) .' (UTC)' : 
+                $blockchain_status['hash_string'] . ' <b>at</b> ' . date("d.m.y G:i:s",$blockchain_status['date_created']/1000) .' (UTC)' : 
                 $status_html = '<b>This attachment is not stamped yet!</b>';
 
 				$form_fields['blockchain_status'] = array(
