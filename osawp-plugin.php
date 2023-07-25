@@ -1,7 +1,7 @@
 <?php
 defined('ABSPATH') OR exit;
 /*
- * Plugin Name: OriginStamp attachments for WordPress
+ * Plugin Name: OriginStamp Attachments for WordPress
  * Plugin URI: 
  * description: Creates a tamper-proof timestamp of your media attachment files using OriginStamp API. This is not an original plugin by OriginStamp.
  * Version: 1.0.1
@@ -43,7 +43,7 @@ if (!class_exists('osawpPlugin')) {
         }
 
         public function __construct() {
-        	define('osawp', plugins_url(__FILE__));
+            define('osawp', plugins_url(__FILE__));
         	add_action('admin_head', array($this, 'osawp_admin_register_head'));
         	add_action('admin_menu', array($this, 'osawp_admin_menu'));
 			add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'osawp_action_links'));	
@@ -59,15 +59,15 @@ if (!class_exists('osawpPlugin')) {
         public function osawp_admin_register_head() {
             // font-awesome repo at cdnjs
             wp_register_style('osawp_wp_admin_css', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css', false, '1.0.0');
-			wp_add_inline_style('osawp_wp_admin_css', '.media-types-required-info {display:none;}.compat-attachment-fields th{padding-top:0;}');
+		    wp_add_inline_style('osawp_wp_admin_css', '.media-types-required-info {display:none;}.compat-attachment-fields th{padding-top:0;}');
             wp_enqueue_style('osawp_wp_admin_css');
         }
 
         public static function on_activation() {
             // Create data table for local storage at activation.
-            if (!current_user_can('activate_plugins'))
+            if (!current_user_can('activate_plugins')) {
                 return;
-
+            }
             global $wpdb;
 
             $charset_collate = $wpdb->get_charset_collate();
@@ -84,9 +84,9 @@ if (!class_exists('osawpPlugin')) {
                 PRIMARY KEY (sha256)
                 ) $charset_collate";
 
-            if (is_admin())
+            if (is_admin()) {
                 require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-
+            }
             try {
                 $res = dbDelta($sql);
                 if (!$res) {
@@ -98,9 +98,9 @@ if (!class_exists('osawpPlugin')) {
         }
 
         public static function on_uninstall() {
-            if (!current_user_can('delete_plugins'))
+            if (!current_user_can('delete_plugins')) {
                 return;
-
+            }
             global $wpdb;
             $options = self::get_options();
             $table_name = $wpdb->prefix . 'osawp_hash_data';
@@ -359,7 +359,7 @@ if (!class_exists('osawpPlugin')) {
                 <br><br>
                 This plugin sends a hash value of your media attachment files, like images and videos, to OriginStamp API. 
                 Then they will be saved to multiple blockchains as SHA256 encoded format, to proof the originality of your media files.
-                This proof is verifiable to anyone who have a copy of the original data and they also call these as timestamps. You can choose wether you like to send all new 
+                This proof is verifiable to anyone who have a copy of the original data. You can choose wether you like to send all new 
                 uploads to OriginStamp or manually send just particular files in the Media Library. However, you can send the file 
                 with same hash value only once. If you need to modify your original file and send a new version, you should create a new upload of it.
             </p><br>
