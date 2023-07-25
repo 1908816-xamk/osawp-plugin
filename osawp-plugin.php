@@ -1,10 +1,10 @@
 <?php
-
+defined('ABSPATH') OR exit;
 /*
  * Plugin Name: OriginStamp attachments for WordPress
  * Plugin URI: 
  * description: Creates a tamper-proof timestamp of your media attachment files using OriginStamp API. This is not an original plugin by OriginStamp.
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Henri Tikkanen
  * Author URI: http://www.henritikkanen.info
  * License: The MIT License (MIT)
@@ -27,9 +27,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
-defined( 'ABSPATH' ) or die();
-
 register_activation_hook(__FILE__, array('osawpPlugin', 'on_activation'));
 register_uninstall_hook(__FILE__, array('osawpPlugin', 'on_uninstall'));
 
@@ -47,6 +44,7 @@ if (!class_exists('osawpPlugin')) {
 
         public function __construct() {
             define('osawp', plugins_url(__FILE__));
+
             add_action('admin_head', array($this, 'osawp_admin_register_head'));
             add_action('admin_menu', array($this, 'osawp_admin_menu'));
 			add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'osawp_action_links'));	
@@ -55,6 +53,7 @@ if (!class_exists('osawpPlugin')) {
 			add_filter('attachment_fields_to_edit',  array($this, 'osawp_get_blockchain_status'),null, 2);
 			add_filter('attachment_fields_to_save', array($this,'osawp_field_save'), null, 2);	
 			add_action('admin_post_nopriv_originstamp_approved', array($this, 'osawp_process_webhook'));
+			add_action( 'rest_api_init', array($this, 'osawp_handle_proof_request'));
         }
 
         // Add font-awesome styles to Originstamp settings page.
@@ -79,11 +78,11 @@ if (!class_exists('osawpPlugin')) {
             $table_name = $wpdb->prefix . 'osawp_hash_data';
 
             $sql = "CREATE TABLE $table_name (
-            		sha256 varchar(64) UNIQUE NOT NULL,
-					time datetime DEFAULT CURRENT_TIMESTAMP,
-                    post_title tinytext NOT NULL,
-                    post_content longtext NOT NULL,
-                    PRIMARY KEY (sha256)
+                        sha256 varchar(64) UNIQUE NOT NULL,
+                        time datetime DEFAULT CURRENT_TIMESTAMP,
+                        post_title tinytext NOT NULL,
+                        post_content longtext NOT NULL,
+                        PRIMARY KEY (sha256)
                     ) $charset_collate";
 
             if (is_admin())
@@ -137,9 +136,11 @@ if (!class_exists('osawpPlugin')) {
 			
 			if ($pagenow == 'post.php') {
 
-				$blockchain_status = get_post_meta( $post->ID, 'blockchain', true );	
-				$blockchain_status ? $status_html = '<b>This attachment is succesfully stamped by the hash string: </b>' . 
-                $blockchain_status['hash_string'] . ' <b>at</b> ' . date("d.m.y G:i:s",$blockchain_status['date_created']/1000) .' (UTC)' : 
+				$blockchain_status = get_post_meta( $post->ID, 'blockchain', true );
+				$blockchain_status ? $proof = json_decode($this->osawp_download_proof($blockchain_status['hash_string'])) : $proof = null;
+				$blockchain_status ? $status_html = '<b>This attachment is succesfully stamped by the following hash string: </b>' . 
+                $blockchain_status['hash_string'] . '<br>' . 
+				'<a href="' . $proof->data->download_url . '">Download Proof (PDF)</a>' : 
                 $status_html = '<b>This attachment is not stamped yet!</b>';
 
 				$form_fields['blockchain_status'] = array(
@@ -236,11 +237,11 @@ if (!class_exists('osawpPlugin')) {
 			}
         }
 
-        // Send computed hash value to OriginStamp.
+        // Send computed hash value to OriginStamp
         private function osawp_send_to_originstamp_api($body) {
             
             $options = self::get_options();
-            $response = wp_remote_post('https://api.originstamp.com/v4/timestamp/create', array(
+            $response = wp_remote_post('https://api.originstamp.com/' . $options['api_version'] . '/timestamp/create', array(
                 'method' => "POST",
                 'timeout' => 45,
                 'redirection' => 5,
@@ -256,12 +257,62 @@ if (!class_exists('osawpPlugin')) {
 
             if (is_wp_error($response)) {
                 $error_message = $response->get_error_message();
-                $message = "Sorry, we had some issues posting your data to OriginStamp:\n";
-
                 return $error_message;
             }
             return $response;
         }
+		
+		// Request a proof from Origistamp
+		 private function osawp_download_proof ($hash_string) {
+            
+            $options = self::get_options();
+			 
+			$body = array(
+                    'currency' => 1,
+                    'hash_string' => $hash_string,
+					'proof_type' => 1
+            );
+			 
+            $response = wp_remote_post('https://api.originstamp.com/v3/timestamp/proof/url', array(
+                'method' => "POST",
+                'timeout' => 45,
+                'redirection' => 5,
+                'httpversion' => "1.1",
+                'blocking' => true,
+                'headers' => array(
+                    'content-type' => "application/json",
+                    'Authorization' => $options['api_key']
+                ),
+                'body' => json_encode($body),
+                'cookies' => array()
+            ));
+
+            if (is_wp_error($response)) {
+                $error_message = $response->get_error_message();
+                return $error_message;
+            }
+            return $response['body'];
+        }
+		
+		// REST route for requesting a proof
+		public function osawp_handle_proof_request() {
+			register_rest_route( 'wp/v2', 'media/proof/(?P<id>[\d]+)', 	
+				array(
+				'methods' => 'GET',
+				'callback' => function ($data) {
+					$media_id = $data['id'];
+					$blockchain_status = get_post_meta( $media_id, 'blockchain', true );
+					if ($blockchain_status) {
+						$hash_string = $blockchain_status['hash_string'];
+						$proof = json_decode($this->osawp_download_proof($hash_string));
+						return $proof->data->download_url;
+					} else {
+						return new WP_Error(
+						'no_posts', 'No blockchain data was found for this attachment id!', array( 'status' => 404 ));
+					}
+				}
+			));
+		}
 		
 		// Process webhook 
 		public function osawp_process_webhook() {
@@ -344,7 +395,7 @@ if (!class_exists('osawpPlugin')) {
         }
 
         public function osawp_api_key() {
-            // Read in API key.
+            // Read in API key
             $options = self::get_options();
             isset($options['api_key']) ? $api_key = $options['api_key'] : $api_key = '';
 
@@ -367,7 +418,7 @@ if (!class_exists('osawpPlugin')) {
         }
 
         public function osawp_api_version() {
-            // Read in API key.
+            // Read in API version
             $options = self::get_options();
             $api_version = $options['api_version'];
 
@@ -390,7 +441,7 @@ if (!class_exists('osawpPlugin')) {
         }
 		
 		public function osawp_stamp_all() {
-            // Stamp all:
+            // Stamp all
             $options = self::get_options();
 			if ( !empty($options['stamp_all']))  {
 				$stamp_all = $options['stamp_all'];
