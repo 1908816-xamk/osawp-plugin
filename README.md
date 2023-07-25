@@ -1,4 +1,4 @@
-# osawp-plugin
+# OriginStamp attachments for WordPress
 
 Plugin Name: OriginStamp attachments for WordPress<br>
 description: Creates a tamper-proof timestamp of your media attachment files using OriginStamp API. This is not an original plugin by OriginStamp.<br>
