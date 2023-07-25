@@ -43,9 +43,9 @@ if (!class_exists('osawpPlugin')) {
         }
 
         public function __construct() {
-            define('osawp', plugins_url(__FILE__));
-            add_action('admin_head', array($this, 'osawp_admin_register_head'));
-            add_action('admin_menu', array($this, 'osawp_admin_menu'));
+        	define('osawp', plugins_url(__FILE__));
+        	add_action('admin_head', array($this, 'osawp_admin_register_head'));
+        	add_action('admin_menu', array($this, 'osawp_admin_menu'));
 			add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'osawp_action_links'));	
 			add_action('add_attachment', array($this, 'osawp_create_originstamp'));
 			add_filter('attachment_fields_to_edit',  array($this, 'osawp_field_edit'),null, 2);
@@ -112,12 +112,12 @@ if (!class_exists('osawpPlugin')) {
         }
 
         public function osawp_admin_menu() {
-            register_setting('osawp_settings', 'osawp_settings');
-            add_options_page(__('OriginStamp Attachments'), __('OriginStamp Attachments'), 'manage_options', 'osawp_settings', array($this, 'osawp_admin_page'));
-            add_settings_section('osawp_settings', __('Settings'), array($this, 'osawp_settings_section'), 'osawp_settings');
-            add_settings_field('osawp_description', __('Description'), array($this, 'osawp_description'), 'osawp_settings', 'osawp_settings');
-            add_settings_field('osawp_api_key', __('API key'), array($this, 'osawp_api_key'), 'osawp_settings', 'osawp_settings');
-            add_settings_field('osawp_api_version', __('API version'), array($this, 'osawp_api_version'), 'osawp_settings', 'osawp_settings');
+        	register_setting('osawp_settings', 'osawp_settings');
+        	add_options_page(__('OriginStamp Attachments'), __('OriginStamp Attachments'), 'manage_options', 'osawp_settings', array($this, 'osawp_admin_page'));
+        	add_settings_section('osawp_settings', __('Settings'), array($this, 'osawp_settings_section'), 'osawp_settings');
+        	add_settings_field('osawp_description', __('Description'), array($this, 'osawp_description'), 'osawp_settings', 'osawp_settings');
+        	add_settings_field('osawp_api_key', __('API key'), array($this, 'osawp_api_key'), 'osawp_settings', 'osawp_settings');
+        	add_settings_field('osawp_api_version', __('API version'), array($this, 'osawp_api_version'), 'osawp_settings', 'osawp_settings');
 			add_settings_field('osawp_stamp_all', __('Stamp new uploads automatically'), array($this, 'osawp_stamp_all'), 'osawp_settings', 'osawp_settings');
 			add_settings_field('osawp_db_status', __('DB status'), array($this, 'osawp_check_db_status'), 'osawp_settings', 'osawp_settings');
 			add_settings_field('osawp_dev', __('Developers'), array($this, 'osawp_dev_info'), 'osawp_settings', 'osawp_settings');
