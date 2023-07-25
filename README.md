@@ -1,6 +1,6 @@
-# OriginStamp attachments for WordPress
+# OriginStamp Attachments for WordPress
 
-Plugin Name: OriginStamp attachments for WordPress<br>
+Plugin Name: OriginStamp Attachments for WordPress<br>
 description: Creates a tamper-proof timestamp of your media attachment files using OriginStamp API. This is not an original plugin by OriginStamp.<br>
 Version: 1.0.1<br>
 Author: Henri Tikkanen<br>
@@ -11,39 +11,15 @@ Tested up to: WordPress 6.2.2<br>
 
 ### Description
 
-OriginStamp is a web-based, trusted timestamping service that uses the decentralized blockchain to store anonymous, tamper-proof timestamps for any digital content.
+**[OriginStamp](https://originstamp.com/)** is a web-based, trusted timestamping service that uses the decentralized blockchain to store anonymous, tamper-proof timestamps for any digital content.
 OriginStamp allows users to hash files, emails, or plain text, and subsequently store the created hashes in the blockchain as well as retrieve and verify timestamps
 that have been committed to the blockchain. OriginStamp is free of charge and easy to use. It enables anyone, e.g., students, researchers, authors, journalists, or 
 artists, to prove that they were the originator of certain information at a given point in time.
 
 This plugin sends a hash value of your media attachment files, like images and videos, to OriginStamp API. Then they will be saved to several blockchains as SHA256 encoded format,
-to proof the originality of your media files. This proof is verifiable to anyone who have a copy of the original data and they also call these as timestamps. You can choose wether 
+to proof the originality of your media files. This proof is verifiable to anyone who have a copy of the original data. You can choose wether 
 you like to send all new uploads to OriginStamp or manually send just particular files in the Media Library. However, you can send the file with same hash value only once. 
 If you need to modify your original file and send a new version, you should create a new upload of it.
-
-####  Q&A
-Q: What content will be sent to OriginStamp API?<br>
-A: In this version, only SHA256 value generated of the original file and ID number of the attachment in WordPress will be sent, nothing else.
-
-Q: When the data will be sent to OriginStamp API?<br>
-A: By default, only when you check "Send to OriginStamp" option in the media editing view and update the post. Alternatively, you can also choose
-"Stamp new uploads automatically" here in the options, when all the new uploads will be send automatically. Only attachments, that haven't sent before in exactly the same form, can be sent.
-
-Q: How I know, that my data is succesfully stamped?<br>
-A: You will see a hash code and a timestamp in media editing view, when OrigiStamp has sent the confirmation, that data is succesfully saved to one or more blockchains.
-This is done by using webhooks provided by OrigiStamp API. More detailed information will be also saved to post meta of the attchment in WordPress. 
-You are free to use this information in your own front-end implementations or with some other applications. You can always check statuses also from your own account in OriginStamp: https://my.originstamp.com/sessions/signin.
-
-Q: Does stamping means that my files will be also minted as NFTs or what is the difference?<br>
-A: No, your files won't be minted as NFTs when they have been stamped. Saving a hash value of your files to a blockchain is providing only a proof of the originality, when the basic idea
-behind NFT is to provide a proof of the ownership of any digital content by using smart contracts.
-
-Q: How to verify a timestamp?<br>
-A: In order to verify the timestamp you would have to download the data, copy the string that is stored in the text file and then use any sha256 calculator of your choice to hash the string. 
-After that go to OriginStamp and search for the hash. Read more at https://docs.originstamp.com/guide/originstamp.html.
-
-Q: Where do I get more Information?<br>
-A: Please visit at OriginStamp FAQ: https://docs.originstamp.com/
 
 ### Installation
 
