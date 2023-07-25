@@ -72,12 +72,12 @@ In order to update the plugin form an earlier version replace the old plugin fil
 ### Changelog
 
 #### 1.0.0
--Initial release
+- Initial release
 
 #### 1.0.1
--Added an API route for requesting a proof file
--Added a download proof option in attachment edit view for stamped files
--Some minor fixes
+- Added an API route for requesting a proof file
+- Added a download proof option in attachment edit view for stamped files
+- Some minor fixes
 
 ### Donate and support
 
