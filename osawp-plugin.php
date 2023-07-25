@@ -44,7 +44,6 @@ if (!class_exists('osawpPlugin')) {
 
         public function __construct() {
             define('osawp', plugins_url(__FILE__));
-
             add_action('admin_head', array($this, 'osawp_admin_register_head'));
             add_action('admin_menu', array($this, 'osawp_admin_menu'));
 			add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'osawp_action_links'));	
