@@ -78,12 +78,12 @@ if (!class_exists('osawpPlugin')) {
             $table_name = $wpdb->prefix . 'osawp_hash_data';
 
             $sql = "CREATE TABLE $table_name (
-                        sha256 varchar(64) UNIQUE NOT NULL,
-                        time datetime DEFAULT CURRENT_TIMESTAMP,
-                        post_title tinytext NOT NULL,
-                        post_content longtext NOT NULL,
-                        PRIMARY KEY (sha256)
-                    ) $charset_collate";
+            	sha256 varchar(64) UNIQUE NOT NULL,
+                time datetime DEFAULT CURRENT_TIMESTAMP,
+                post_title tinytext NOT NULL,
+                post_content longtext NOT NULL,
+                PRIMARY KEY (sha256)
+                ) $charset_collate";
 
             if (is_admin())
                 require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -136,17 +136,17 @@ if (!class_exists('osawpPlugin')) {
 			
 			if ($pagenow == 'post.php') {
 
-				$blockchain_status = get_post_meta( $post->ID, 'blockchain', true );
-				$blockchain_status ? $proof = json_decode($this->osawp_download_proof($blockchain_status['hash_string'])) : $proof = null;
-				$blockchain_status ? $status_html = '<b>This attachment is succesfully stamped by the following hash string: </b>' . 
-                $blockchain_status['hash_string'] . '<br>' . 
-				'<a href="' . $proof->data->download_url . '">Download Proof (PDF)</a>' : 
-                $status_html = '<b>This attachment is not stamped yet!</b>';
+			$blockchain_status = get_post_meta( $post->ID, 'blockchain', true );
+			$blockchain_status ? $proof = json_decode($this->osawp_download_proof($blockchain_status['hash_string'])) : $proof = null;
+			$blockchain_status ? $status_html = '<b>This attachment is succesfully stamped by the following hash string: </b>' . 
+            $blockchain_status['hash_string'] . '<br>' . 
+			'<a href="' . $proof->data->download_url . '">Download Proof (PDF)</a>' : 
+            $status_html = '<b>This attachment is not stamped yet!</b>';
 
-				$form_fields['blockchain_status'] = array(
-					'label' => 'Blockchain status:',
-					'input' => 'html',
-					'html' => $status_html,
+			$form_fields['blockchain_status'] = array(
+				'label' => 'Blockchain status:',
+				'input' => 'html',
+				'html' => $status_html,
 				);
 			}
 			return $form_fields;
@@ -263,9 +263,9 @@ if (!class_exists('osawpPlugin')) {
         }
 		
 		// Request a proof from Origistamp
-		 private function osawp_download_proof ($hash_string) {
+		private function osawp_download_proof ($hash_string) {
             
-            $options = self::get_options();
+        	$options = self::get_options();
 			 
 			$body = array(
                     'currency' => 1,
