@@ -43,9 +43,9 @@ if (!class_exists('osawpPlugin')) {
         }
 
         public function __construct() {
-            define('osawp', plugins_url(__FILE__));
-        	add_action('admin_head', array($this, 'osawp_admin_register_head'));
-        	add_action('admin_menu', array($this, 'osawp_admin_menu'));
+			define('osawp', plugins_url(__FILE__));
+			add_action('admin_head', array($this, 'osawp_admin_register_head'));
+			add_action('admin_menu', array($this, 'osawp_admin_menu'));
 			add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'osawp_action_links'));	
 			add_action('add_attachment', array($this, 'osawp_create_originstamp'));
 			add_filter('attachment_fields_to_edit',  array($this, 'osawp_field_edit'),null, 2);
@@ -112,16 +112,16 @@ if (!class_exists('osawpPlugin')) {
         }
 
         public function osawp_admin_menu() {
-        	register_setting('osawp_settings', 'osawp_settings');
-        	add_options_page(__('OriginStamp Attachments'), __('OriginStamp Attachments'), 'manage_options', 'osawp_settings', array($this, 'osawp_admin_page'));
-        	add_settings_section('osawp_settings', __('Settings'), array($this, 'osawp_settings_section'), 'osawp_settings');
-        	add_settings_field('osawp_description', __('Description'), array($this, 'osawp_description'), 'osawp_settings', 'osawp_settings');
-        	add_settings_field('osawp_api_key', __('API key'), array($this, 'osawp_api_key'), 'osawp_settings', 'osawp_settings');
-        	add_settings_field('osawp_api_version', __('API version'), array($this, 'osawp_api_version'), 'osawp_settings', 'osawp_settings');
+			register_setting('osawp_settings', 'osawp_settings');
+			add_options_page(__('OriginStamp Attachments'), __('OriginStamp Attachments'), 'manage_options', 'osawp_settings', array($this, 'osawp_admin_page'));
+			add_settings_section('osawp_settings', __('Settings'), array($this, 'osawp_settings_section'), 'osawp_settings');
+			add_settings_field('osawp_description', __('Description'), array($this, 'osawp_description'), 'osawp_settings', 'osawp_settings');
+			add_settings_field('osawp_api_key', __('API key'), array($this, 'osawp_api_key'), 'osawp_settings', 'osawp_settings');
+			add_settings_field('osawp_api_version', __('API version'), array($this, 'osawp_api_version'), 'osawp_settings', 'osawp_settings');
 			add_settings_field('osawp_stamp_all', __('Stamp new uploads automatically'), array($this, 'osawp_stamp_all'), 'osawp_settings', 'osawp_settings');
 			add_settings_field('osawp_db_status', __('DB status'), array($this, 'osawp_check_db_status'), 'osawp_settings', 'osawp_settings');
 			add_settings_field('osawp_dev', __('Developers'), array($this, 'osawp_dev_info'), 'osawp_settings', 'osawp_settings');
-        }
+		}
 
         public function osawp_action_links($links) {
             array_unshift($links, '<a href="' . admin_url('options-general.php?page=osawp_settings') . '">Settings</a>');
@@ -358,7 +358,7 @@ if (!class_exists('osawpPlugin')) {
                 (Source: <a target="_blank" href="https://docs.originstamp.com/">docs.originstamp.com)</a>
                 <br><br>
                 This plugin sends a hash value of your media attachment files, like images and videos, to OriginStamp API. 
-                Then they will be saved to multiple blockchains as SHA256 encoded format, to proof the originality of your media files.
+                Then they will be saved to multiple blockchains as SHA256 encoded format to proof the originality of your media files.
                 This proof is verifiable to anyone who have a copy of the original data. You can choose wether you like to send all new 
                 uploads to OriginStamp or manually send just particular files in the Media Library. However, you can send the file 
                 with same hash value only once. If you need to modify your original file and send a new version, you should create a new upload of it.
@@ -450,7 +450,7 @@ if (!class_exists('osawpPlugin')) {
 
             ?>
 			<input type="checkbox" id="osawp_settings[stamp_all]" name="osawp_settings[stamp_all]" value="1" <?php if ($stamp_all) { echo 'checked="checked"'; } ?> />    
-            <p class="description"><?php _e('Check this option if you want all new media files to be uploaded automatically.') ?> <p>				       
+            <p class="description"><?php _e('Check this option if you wish all new media files to be uploaded automatically.') ?> <p>				       
             <?php		
         }
 
@@ -470,7 +470,7 @@ if (!class_exists('osawpPlugin')) {
             ?>
             This plugin version is published by <a target="_blank" href="https://henritikkanen.info">Henri Tikkanen</a>, 
             but it's based on an early development stage plugin created by guys from OriginStamp. Any support is not inculuded
-            and you use this plugin by your own by your own risk.
+            and you use this plugin by your own risk.
             For getting more information about OriginStamp, please visit their site: 
             <a target="_blank" href="https://originstamp.com"><i class="fa fa-sign-in" aria-hidden="true"></i></a><br><br>
             Credits of the original plugin belongs to: <br><br>
