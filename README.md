@@ -6,7 +6,6 @@ Version: 1.0.1<br>
 Author: Henri Tikkanen<br>
 Author URI: http://www.henritikkanen.info<br>
 License: The MIT License (MIT)<br>
-Requires at least: WordPress 4.7<br>
 Tested up to: WordPress 6.2.2<br>
 
 ### Description
@@ -24,26 +23,25 @@ If you need to modify your original file and send a new version, you should crea
 ### Installation
 
 1. Download zipped plugin files.
-2. Visit 'Plugins > Add New > Upload Plugin', search the zip file from your computer and click 'Install Now'.
-3. Activate OriginStamp from your Plugins page.
+2. Visit **Plugins > Add New > Upload Plugin**, search the zip file from your computer and click **Install Now**.
+3. Activate the plugin.
+
+### Upgrade Notice
+In order to update the plugin form an earlier version, please do the installation steps 1-2 and allow WordPress to replace existing files.
 
 ### Settings
 
-Visit 'Settings > OriginStamp Attachments' and adjust your configuration.
+Visit **Settings > OriginStamp Attachments** and adjust your configuration.
 
 There are only two mandatory setting fields.<br>
-The first mandatory field is API key, that needs to be filled by the key created at https://originstamp.com.<br>
+The first mandatory field is API key, that needs to be filled by the key created at **[OriginStamp](https://originstamp.com/)**.<br>
 This key will be used to send requests to OriginStamp.<br>
-The second mandatory field is API version, that is prefilled with the current version at the moment, when the plugin is released.
+The second mandatory field is API version, that is prefilled with the current version at the moment when plugin version is released.
 
 The plugin will create a data table in the local WordPress database to store hash values with timestamps, original post titles and URLs.
 If the data table is not created (you will receive an error in the settings page), the plugin won`t function properly.
 
-If you delete the plugin, the created data table will be removed automatically. So do a backup if you want to keep data stored in it.
-
-### Upgrade Notice
-
-In order to update the plugin form an earlier version replace the old plugin file.
+If you delete the plugin, the created data table will be removed automatically. So please do a backup if you wish to keep data stored in the database.
 
 ### Changelog
 
@@ -60,4 +58,4 @@ In order to update the plugin form an earlier version replace the old plugin fil
 ### Donate and support
 
 If you want to support my work, you can donate any amounts of Ethereums to: 0x8f2e099eF440FC7892e696791b43485260D919Ed<br>
-Or support creators of the original plugin by choosing their premium plan here: https://originstamp.com/
+Or support creators of the original plugin by choosing their premium plan here: **[OriginStamp](https://originstamp.com/)**
