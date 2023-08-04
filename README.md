@@ -55,6 +55,9 @@ If you delete the plugin, the created data table will be removed automatically. 
 
 - Some minor fixes
 
+#### 1.0.2
+- Changed webhook "currency" value from Bitcoin to Ethereum
+
 ### Donate and support
 
 If you want to support my work, you can donate any amounts of Ethereums to: 0x8f2e099eF440FC7892e696791b43485260D919Ed<br>
