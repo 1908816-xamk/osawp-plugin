@@ -4,7 +4,7 @@ defined('ABSPATH') OR exit;
  * Plugin Name: OriginStamp Attachments for WordPress
  * Plugin URI: 
  * description: Creates a tamper-proof timestamp of your media attachment files using OriginStamp API. This is not an original plugin by OriginStamp.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Author: Henri Tikkanen
  * Author URI: http://www.henritikkanen.info
  * License: The MIT License (MIT)
