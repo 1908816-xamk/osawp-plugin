@@ -225,7 +225,7 @@ if (!class_exists('osawpPlugin')) {
 				$body['comment'] = $attachment_id;
 
 				$body['notifications'] [] = Array(
-					'currency' => 0,
+					'currency' => 1,
 					'notification_type' => 1,
 					'target' => get_site_url() . '/wp-admin/admin-post.php?action=originstamp_approved'
 				);
