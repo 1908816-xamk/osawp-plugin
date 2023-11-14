@@ -2,12 +2,12 @@
 
 Plugin Name: OriginStamp Attachments for WordPress<br>
 Description: Creates a tamper-proof timestamp of your media attachment files using OriginStamp API. This is not an original plugin by OriginStamp.<br>
-Version: 1.0.2<br>
+Version: 1.0.3<br>
 Requires PHP: 7.4<br>
 Author: Henri Tikkanen<br>
 Author URI: https://github.com/henritik/<br>
 License: The MIT License (MIT)<br>
-Tested up to: WordPress 6.3.1<br>
+Tested up to: WordPress 6.4.1<br>
 
 ### Description
 
@@ -46,18 +46,20 @@ If you delete the plugin, the created data table will be removed automatically. 
 
 ### Changelog
 
-#### 1.0.0
-- Initial release
+#### 1.0.3
+- Tested with WP 6.4.1
+- Added permission callback for REST route
+  
+#### 1.0.2
+- Changed webhook "currency" value from Bitcoin to Ethereum
 
 #### 1.0.1
 - Added an API route for requesting a proof file
-
 - Added a download proof option in attachment edit view for stamped files
-
 - Some minor fixes
 
-#### 1.0.2
-- Changed webhook "currency" value from Bitcoin to Ethereum
+#### 1.0.0
+- Initial release
 
 ### Donate and support
 
